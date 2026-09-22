@@ -1,0 +1,11 @@
+{
+  "periodo_inicio": "2026-09-14",
+  "periodo_fim": "2026-09-17",
+  "registros": 4,
+  "moeda": "BRL",
+  "total": "500.00",
+  "canais": {
+    "Loja": "320.00",
+    "Site": "180.00"
+  }
+}

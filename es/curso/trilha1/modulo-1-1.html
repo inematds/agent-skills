@@ -1,0 +1,946 @@
+<!DOCTYPE html>
+<html class="dark" lang="es">
+<head>
+<script>
+(function () {
+  try {
+    var html = document.documentElement;
+    var DEF = { theme: 'inema-dark', font: 'inter', fontScale: 100, lineWidth: 68, leading: 1.7, accent: 'emerald' };
+    function clone(o) { var r = {}; for (var x in o) r[x] = o[x]; return r; }
+    var p = clone(DEF);
+    try {
+      var raw = localStorage.getItem('inema.prefs');
+      if (raw) {
+        var parsed = JSON.parse(raw);
+        if (parsed && typeof parsed === 'object') {
+          for (var k in DEF) if (parsed[k] != null) p[k] = parsed[k];
+        }
+      } else {
+        // fallback ao tema legado do v1
+        var legacy = localStorage.getItem('theme');
+        if (legacy === 'light') p.theme = 'claro';
+        else if (legacy === 'dark') p.theme = 'inema-dark';
+      }
+    } catch (e) { p = clone(DEF); }
+
+    // mapa tema -> (.dark on/off, data-theme, color-scheme)
+    var THEMES = {
+      'inema-dark': { dark: true,  attr: null,        cs: 'dark'  },
+      'claro':      { dark: false, attr: null,        cs: 'light' },
+      'sepia':      { dark: false, attr: 'sepia',     cs: 'light' },
+      'foco':       { dark: null,  attr: 'foco',      cs: null    },  // herda eixo atual
+      'contraste':  { dark: true,  attr: 'contraste', cs: 'dark'  }
+    };
+    var t = THEMES[p.theme] || THEMES['inema-dark'];
+
+    if (t.dark === true) html.classList.add('dark');
+    else if (t.dark === false) html.classList.remove('dark');
+    // 'foco' (null) preserva o que ja houver no atributo class do <html>
+
+    if (t.attr) html.setAttribute('data-theme', t.attr);
+    else html.removeAttribute('data-theme');
+
+    html.style.colorScheme = (t.cs ? t.cs : (html.classList.contains('dark') ? 'dark' : 'light'));
+
+    html.setAttribute('data-font', p.font || 'inter');
+    html.setAttribute('data-accent', p.accent || 'emerald');
+
+    // variaveis de leitura (espelham learn.js / learn.css) ANTES do paint
+    var s = html.style;
+    var scale = (+p.fontScale || 100);
+    s.setProperty('--inema-font-scale', (scale / 100).toString());
+    s.setProperty('font-size', scale + '%');               // :root em %, nunca px
+    s.setProperty('--measure', (+p.lineWidth || 68) + 'ch');
+    s.setProperty('--lh-body', (+p.leading || 1.7).toString());
+    var fam = p.font === 'system'
+      ? 'system-ui, -apple-system, "Segoe UI", Roboto, sans-serif'
+      : (p.font === 'leitura'
+        ? '"Atkinson Hyperlegible", "Inter", system-ui, sans-serif'
+        : '"Inter", system-ui, sans-serif');
+    s.setProperty('--font-body', fam);
+
+    var ACC = {
+      emerald: [152, 76, 45], blue: [217, 91, 60], purple: [258, 90, 66],
+      amber: [38, 92, 50], teal: [174, 72, 41], rose: [350, 89, 60]
+    };
+    var a = ACC[p.accent] || ACC.emerald;
+    s.setProperty('--accent-h', a[0] + '');
+    s.setProperty('--accent-s', a[1] + '%');
+    s.setProperty('--accent-l', a[2] + '%');
+    s.setProperty('--accent', 'hsl(' + a[0] + ' ' + a[1] + '% ' + a[2] + '%)');
+  } catch (err) {
+    // qualquer falha => default dark, preserva a marca
+    try { document.documentElement.classList.add('dark'); document.documentElement.style.colorScheme = 'dark'; } catch (e) {}
+  }
+})();
+</script>
+<meta charset="utf-8"/>
+<meta content="width=device-width, initial-scale=1" name="viewport"/>
+<title>Entiende qué enseña una skill | Agent Skills · INEMA</title>
+<meta content="Curso completo de habilidades en Codex: ingeniería inversa, gatillos, libertad, verificación, costo y mejora continua. Formato INEMA v2." name="description"/>
+<meta content="agent-skills-codex-es" name="inema-course"/>
+<meta content="../../" name="course-root"/>
+<script data-inema-manifest="" type="application/json">{"course": "agent-skills-codex-es", "tracks": [{"n": "1", "title": "Fundamentos", "modules": [{"id": "1-1", "title": "Entiende qué enseña una skill", "topics": 6, "href": "curso/trilha1/modulo-1-1.html"}, {"id": "1-2", "title": "Empieza por el resultado aprobado", "topics": 6, "href": "curso/trilha1/modulo-1-2.html"}]}, {"n": "2", "title": "Construcción", "modules": [{"id": "2-1", "title": "Construye una skill con un trabajo claro", "topics": 6, "href": "curso/trilha2/modulo-2-1.html"}, {"id": "2-2", "title": "Ajusta la libertad del agente", "topics": 6, "href": "curso/trilha2/modulo-2-2.html"}]}, {"n": "3", "title": "Verificación", "modules": [{"id": "3-1", "title": "Verifica con evidencias", "topics": 6, "href": "curso/trilha3/modulo-3-1.html"}, {"id": "3-2", "title": "Haz una revisión visual de verdad", "topics": 6, "href": "curso/trilha3/modulo-3-2.html"}]}, {"n": "4", "title": "Evolución", "modules": [{"id": "4-1", "title": "Compara calidad, costo y esfuerzo", "topics": 6, "href": "curso/trilha4/modulo-4-1.html"}, {"id": "4-2", "title": "Evoluciona y entrega tu primera skill", "topics": 6, "href": "curso/trilha4/modulo-4-2.html"}]}]}</script>
+<link href="../../assets/favicon.svg" rel="icon" type="image/svg+xml"/>
+<link href="../../assets/course.css" rel="stylesheet"/>
+<link href="../../assets/learn.css" rel="stylesheet"/>
+<link href="../../assets/patches.css" rel="stylesheet"/>
+<link href="https://inematds.github.io/agent-skills/curso/trilha1/modulo-1-1.html" hreflang="pt-BR" rel="alternate"/><link href="https://inematds.github.io/agent-skills/en/curso/trilha1/modulo-1-1.html" hreflang="en" rel="alternate"/><link href="https://inematds.github.io/agent-skills/es/curso/trilha1/modulo-1-1.html" hreflang="es" rel="alternate"/><link href="https://inematds.github.io/agent-skills/curso/trilha1/modulo-1-1.html" hreflang="x-default" rel="alternate"/><link href="https://inematds.github.io/agent-skills/es/curso/trilha1/modulo-1-1.html" rel="canonical"/><style id="course-language-css">[data-course-languages]{position:fixed;bottom:0;left:0;right:0;z-index:60;display:flex;gap:1.25rem;padding:.65rem;justify-content:center;background:#111827;color:#f3f4f6}[data-course-languages] a{color:inherit;font:14px system-ui}[data-course-languages] [aria-current]{font-weight:bold;text-decoration:underline}[data-course-languages] a:focus-visible{outline:2px solid #38bdf8;outline-offset:4px}body{padding-bottom:75px}</style></head>
+<body class="track-1">
+<a class="skip" href="#conteudo">Saltar al contenido</a>
+<nav aria-label="Navegación principal" class="site-nav">
+<div class="wrap nav-row">
+<a aria-label="Agent Skills, inicio" class="brand" href="../../index.html">
+<svg aria-hidden="true" fill="none" viewbox="0 0 32 32">
+<path d="m11 7-8 9 8 9M21 7l8 9-8 9M18 4l-4 24" stroke="currentColor" stroke-width="2.5"></path>
+</svg>
+<span class="brand-name">AGENT SKILLS</span>
+</a>
+<a class="text-sky-400" href="https://inema.club" rel="noopener" target="_blank">INEMA.CLUB</a>
+<div class="nav-links">
+<a aria-current="page" class="active" href="../../curso/trilha1/index.html">
+<span class="nav-full">Fundamentos</span>
+<span class="nav-short">T1</span>
+</a>
+<a class="" href="../../curso/trilha2/index.html">
+<span class="nav-full">Construcción</span>
+<span class="nav-short">T2</span>
+</a>
+<a class="" href="../../curso/trilha3/index.html">
+<span class="nav-full">Verificación</span>
+<span class="nav-short">T3</span>
+</a>
+<a class="" href="../../curso/trilha4/index.html">
+<span class="nav-full">Evolución</span>
+<span class="nav-short">T4</span>
+</a>
+</div>
+<button aria-label="Alternar tema claro y oscuro" class="theme-toggle" id="theme-toggle">
+<svg aria-hidden="true" fill="none" viewbox="0 0 24 24">
+<circle cx="12" cy="12" r="4" stroke="currentColor" stroke-width="1.6"></circle>
+<path d="M12 1v3m0 16v3M1 12h3m16 0h3M4 4l2 2m12 12 2 2M4 20l2-2M18 6l2-2" stroke="currentColor" stroke-width="1.6"></path>
+</svg>
+</button>
+</div>
+</nav>
+<div class="wrap studybar">
+<div class="tools">
+<button data-inema-journey-open="">Mi recorrido</button>
+<button data-course-resume="">Continuar leyendo</button>
+<div class="appearance-wrap">
+<button aria-controls="appearance" aria-expanded="false" data-inema-appearance-toggle="#appearance">Apariencia</button>
+<div class="inema-appearance-pop" data-inema-appearance="" data-open="false" id="appearance">
+<h3>Tema</h3>
+<div class="inema-segment">
+<button aria-pressed="false" data-inema-set-theme="inema-dark">Oscuro</button>
+<button aria-pressed="false" data-inema-set-theme="claro">Claro</button>
+<button aria-pressed="false" data-inema-set-theme="sepia">Sepia</button>
+<button aria-pressed="false" data-inema-set-theme="foco">Enfoque</button>
+<button aria-pressed="false" data-inema-set-theme="contraste">Alto contraste</button>
+</div>
+<h3>Fuente</h3>
+<div class="inema-segment">
+<button aria-pressed="false" data-inema-set-font="inter">Inter / sistema</button>
+<button aria-pressed="false" data-inema-set-font="system">Sistema</button>
+<button aria-pressed="false" data-inema-set-font="leitura">Lectura</button>
+</div>
+<h3>Tamaño</h3>
+<div class="inema-segment">
+<button aria-pressed="false" data-inema-set-fontscale="100">100%</button>
+<button aria-pressed="false" data-inema-set-fontscale="112">112%</button>
+<button aria-pressed="false" data-inema-set-fontscale="125">125%</button>
+</div>
+<h3>Ancho de texto</h3>
+<div class="inema-segment">
+<button aria-pressed="false" data-inema-set-linewidth="60">Estrecha</button>
+<button aria-pressed="false" data-inema-set-linewidth="68">Media</button>
+<button aria-pressed="false" data-inema-set-linewidth="75">Ancha</button>
+</div>
+<h3>Interlineado</h3>
+<div class="inema-segment">
+<button aria-pressed="false" data-inema-set-leading="1.45">Compacta</button>
+<button aria-pressed="false" data-inema-set-leading="1.7">Cómoda</button>
+</div>
+<h3>Acento de los controles</h3>
+<div class="inema-segment">
+<button aria-pressed="false" data-inema-set-accent="emerald">Verde</button>
+<button aria-pressed="false" data-inema-set-accent="blue">Azul</button>
+<button aria-pressed="false" data-inema-set-accent="purple">Púrpura</button>
+<button aria-pressed="false" data-inema-set-accent="amber">Ámbar</button>
+<button aria-pressed="false" data-inema-set-accent="teal">Turquesa</button>
+<button aria-pressed="false" data-inema-set-accent="rose">Rosa</button>
+</div>
+</div>
+</div>
+</div>
+<div aria-label="Progreso de lectura" aria-valuemax="100" aria-valuemin="0" aria-valuenow="0" class="meter" data-inema-meter="curso" role="progressbar">
+<div class="meter-top">
+<span data-inema-meter-frac="">0 de 0</span>
+<span data-inema-meter-pct="">0%</span>
+</div>
+<div class="inema-bar">
+<div data-inema-meter-fill="">
+</div>
+</div>
+</div>
+</div>
+<noscript>
+<p class="wrap no-script">Puedes leer todas las lecciones sin JavaScript. El progreso, las notas y los controles de apariencia necesitan JavaScript.</p>
+</noscript>
+<main class="wrap" id="conteudo">
+<div class="breadcrumb">
+<a href="../../index.html">Inicio</a> / <a href="index.html">Fundamentos</a> / Módulo 1.1</div>
+<header class="hero">
+<span class="pill">MÓDULO 1.1</span>
+<h1>Entiende qué enseña una skill</h1>
+<p class="lead">Separa instrucción, herramienta y resultado antes de automatizar.</p>
+<p>
+<strong>Al final:</strong> Elegir una tarea repetible y explicar dónde entra la skill.</p>
+</header>
+<div class="stats">
+<div class="stat">
+<strong>6</strong>
+<span>tópicos</span>
+</div>
+<div class="stat">
+<strong>45 min</strong>
+<span>estimación con práctica</span>
+</div>
+<div class="stat">
+<strong>6</strong>
+<span>ejercicios comentados</span>
+</div>
+<div class="stat">
+<strong>1</strong>
+<span>verificación final</span>
+</div>
+</div>
+<div class="reading-layout">
+<aside aria-label="Índice del módulo" class="toc" data-inema-toc="">
+<h2>En este módulo</h2>
+<span data-inema-section-counter="">Sección 1 de 6</span>
+<ol>
+<li>
+<a href="#topico-1">1. Separa la receta de quien cocina</a>
+</li>
+<li>
+<a href="#topico-2">2. Diferencia prompt, skill, regla y herramienta</a>
+</li>
+<li>
+<a href="#topico-3">3. Encuentra tareas que merecen una skill</a>
+</li>
+<li>
+<a href="#topico-4">4. Dibuja el contrato de entrada y salida</a>
+</li>
+<li>
+<a href="#topico-5">5. Lee críticamente la promesa del video</a>
+</li>
+<li>
+<a href="#topico-6">6. Prepara tu laboratorio de aprendizaje</a>
+</li>
+</ol>
+<div aria-label="Progreso de lectura" aria-valuemax="100" aria-valuemin="0" aria-valuenow="0" class="meter" data-inema-meter="modulo:1-1" role="progressbar">
+<div class="meter-top">
+<span data-inema-meter-frac="">0 de 0</span>
+<span data-inema-meter-pct="">0%</span>
+</div>
+<div class="inema-bar">
+<div data-inema-meter-fill="">
+</div>
+</div>
+</div>
+<p class="muted">Selecciona un fragmento de las explicaciones para resaltarlo o tomar notas.</p>
+</aside>
+<article class="lesson-content" data-inema-module="1-1" data-inema-track="1">
+<section class="lesson" data-inema-topic="modulo-1-1#topico-1" id="topico-1">
+<div class="lesson-head">
+<span class="circle">1</span>
+<h2>Separa la receta de quien cocina</h2>
+</div>
+<figure class="diagram">
+<div aria-label="Diagrama con desplazamiento horizontal en pantallas pequeñas" class="diagram-scroll" role="region" tabindex="0">
+<svg aria-label="Ingredientes → Receta → Cocinero → Plato evaluado" class="w-full h-auto" role="img" viewbox="0 0 720 200">
+<defs>
+<pattern height="24" id="d1-1-1-grid" patternunits="userSpaceOnUse" width="24">
+<circle cx="2" cy="2" fill="#34d399" opacity=".13" r="1"></circle>
+</pattern>
+<filter id="d1-1-1-glow">
+<fegaussianblur result="b" stddeviation="1.8"></fegaussianblur>
+<femerge>
+<femergenode in="b"></femergenode>
+<femergenode in="SourceGraphic"></femergenode>
+</femerge>
+</filter>
+<marker id="d1-1-1-arrow" markerheight="7" markerwidth="7" orient="auto" refx="6" refy="3.5">
+<path d="M0 0 7 3.5 0 7" fill="#34d399"></path>
+</marker>
+</defs>
+<rect fill="#0f172a" height="200" width="720"></rect>
+<rect fill="url(#d1-1-1-grid)" height="200" width="720"></rect>
+<path d="M175 100 H193" fill="none" marker-end="url(#d1-1-1-arrow)" opacity=".6" stroke="#34d399" stroke-width="1.8"></path>
+<g>
+<rect fill="#111827" filter="url(#d1-1-1-glow)" height="74" rx="10" stroke="#34d399" stroke-width="2" width="150" x="20" y="63"></rect>
+<text fill="#e5e7eb" font-size="14" font-weight="600" text-anchor="middle" x="95.0" y="105.0">Ingredientes</text>
+</g>
+<path d="M350 100 H368" fill="none" marker-end="url(#d1-1-1-arrow)" opacity=".6" stroke="#34d399" stroke-width="1.8"></path>
+<g>
+<rect fill="#111827" height="74" rx="10" stroke="#38bdf8" stroke-width="2" width="150" x="195" y="63"></rect>
+<text fill="#e5e7eb" font-size="14" font-weight="600" text-anchor="middle" x="270.0" y="105.0">Receta</text>
+</g>
+<path d="M525 100 H543" fill="none" marker-end="url(#d1-1-1-arrow)" opacity=".6" stroke="#34d399" stroke-width="1.8"></path>
+<g>
+<rect fill="#111827" height="74" rx="10" stroke="#38bdf8" stroke-width="2" width="150" x="370" y="63"></rect>
+<text fill="#e5e7eb" font-size="14" font-weight="600" text-anchor="middle" x="445.0" y="105.0">Cocinero</text>
+</g>
+<g>
+<rect fill="#111827" height="74" rx="10" stroke="#38bdf8" stroke-width="2" width="150" x="545" y="63"></rect>
+<text fill="#e5e7eb" font-size="14" font-weight="600" text-anchor="middle" x="620.0" y="105.0">Plato evaluado</text>
+</g>
+</svg>
+</div>
+<figcaption>La receta orienta el trabajo, pero no compra ingredientes ni prueba el plato sola.</figcaption>
+</figure>
+<div class="inema-prose">
+<h3>Qué es</h3>
+<p data-inema-block="m1-1-t1-p1" id="m1-1-t1-p1">Una skill es un procedimiento reutilizable que guía a un agente en una tarea. En la analogía del video, el resultado es la panqueca, el agente es el cocinero y la skill es la receta. El archivo registra decisiones que no quieres explicar de nuevo en cada pedido.</p>
+<h3>Por qué aprender</h3>
+<p data-inema-block="m1-1-t1-p2" id="m1-1-t1-p2">Sin un procedimiento, el agente necesita completar vacíos: tamaño, formato, fuentes y criterios de calidad. Registrar esas decisiones reduce variaciones evitables. Esto no vuelve a la generación infalible: ingredientes diferentes y herramientas indisponibles todavía cambian el resultado.</p>
+<h3>Conceptos clave</h3>
+</div>
+<div class="key-grid">
+<div class="key">
+<strong>Entrada</strong> el material recibido.</div>
+<div class="key">
+<strong>Proceso</strong> las acciones y decisiones.</div>
+<div class="key">
+<strong>Salida</strong> el artefacto entregado.</div>
+<div class="key">
+<strong>Aceptación</strong> la evidencia de que la entrega sirve.</div>
+</div>
+<div class="code-box">
+<div class="code-head">
+<span>EJEMPLO COMENTADO · 1.1.1</span>
+<button data-copy="code-1-1-1">Copiar ejemplo</button>
+</div>
+<pre id="code-1-1-1">
+<code>Pedido suelto: “Haga mi informe.”
+Pedido con contrato: “Transforme este CSV en un resumen
+semanal, con totales por canal, período y pendientes.”</code>
+</pre>
+</div>
+<div class="comparison">
+<div class="compare-good">
+<h3>✓ Haz así</h3>
+<p>Nombra la entrada y muestra una salida aprobada.</p>
+</div>
+<div class="compare-bad">
+<h3>✗ Evita este error</h3>
+<p>Prometer resultados idénticos solo porque existe un SKILL.md.</p>
+</div>
+</div>
+<aside class="tip">
+<strong>Llévalo a tu skill.</strong> La receta guía el trabajo, pero no compra ingredientes ni prueba el plato por sí sola. Use este principio para revisar el ejemplo antes de avanzar.</aside>
+<div class="practice">
+<h3>Practica antes de revelar</h3>
+<p>Elige una tarea que hayas repetido tres veces y describe la entrada y la salida en una frase.</p>
+<details>
+<summary>Ver respuesta comentada</summary>
+<p>Ejemplo: “A partir de un CSV de ventas de la semana, producir un informe Markdown con totales por canal y preguntas para revisión.” Una tarea con fronteras permite probar la skill.</p>
+</details>
+</div>
+<div class="read-controls">
+<button aria-pressed="false" data-inema-read-toggle="">
+<span aria-hidden="true">✓</span>
+<span data-inema-read-label="">Marcar como leído</span>
+</button>
+<button aria-pressed="false" data-inema-doubt-toggle="">Tengo una duda</button>
+</div>
+</section>
+<section class="lesson" data-inema-topic="modulo-1-1#topico-2" id="topico-2">
+<div class="lesson-head">
+<span class="circle">2</span>
+<h2>Diferencia prompt, skill, regla y herramienta</h2>
+</div>
+<figure class="diagram">
+<div aria-label="Diagrama con desplazamiento horizontal en pantallas pequeñas" class="diagram-scroll" role="region" tabindex="0">
+<svg aria-label="Pedido → Instrucciones → Procedimiento → Herramientas" class="w-full h-auto" role="img" viewbox="0 0 720 200">
+<defs>
+<pattern height="24" id="d1-1-2-grid" patternunits="userSpaceOnUse" width="24">
+<circle cx="2" cy="2" fill="#34d399" opacity=".13" r="1"></circle>
+</pattern>
+<filter id="d1-1-2-glow">
+<fegaussianblur result="b" stddeviation="1.8"></fegaussianblur>
+<femerge>
+<femergenode in="b"></femergenode>
+<femergenode in="SourceGraphic"></femergenode>
+</femerge>
+</filter>
+<marker id="d1-1-2-arrow" markerheight="7" markerwidth="7" orient="auto" refx="6" refy="3.5">
+<path d="M0 0 7 3.5 0 7" fill="#34d399"></path>
+</marker>
+</defs>
+<rect fill="#0f172a" height="200" width="720"></rect>
+<rect fill="url(#d1-1-2-grid)" height="200" width="720"></rect>
+<path d="M179 65 H192 V91 H197" fill="none" marker-end="url(#d1-1-2-arrow)" opacity=".6" stroke="#34d399" stroke-width="1.8"></path>
+<g>
+<rect fill="#111827" filter="url(#d1-1-2-glow)" height="72" rx="10" stroke="#34d399" stroke-width="2" width="150" x="25" y="25"></rect>
+<text fill="#e5e7eb" font-size="14" font-weight="600" text-anchor="middle" x="100.0" y="66.0">Pedido</text>
+</g>
+<path d="M354 91 H367 V117 H372" fill="none" marker-end="url(#d1-1-2-arrow)" opacity=".6" stroke="#34d399" stroke-width="1.8"></path>
+<g>
+<rect fill="#111827" height="72" rx="10" stroke="#38bdf8" stroke-width="2" width="150" x="200" y="51"></rect>
+<text fill="#e5e7eb" font-size="14" font-weight="600" text-anchor="middle" x="275.0" y="92.0">Orientaciones</text>
+</g>
+<path d="M529 117 H542 V143 H547" fill="none" marker-end="url(#d1-1-2-arrow)" opacity=".6" stroke="#34d399" stroke-width="1.8"></path>
+<g>
+<rect fill="#111827" height="72" rx="10" stroke="#38bdf8" stroke-width="2" width="150" x="375" y="77"></rect>
+<text fill="#e5e7eb" font-size="14" font-weight="600" text-anchor="middle" x="450.0" y="118.0">Procedimiento</text>
+</g>
+<g>
+<rect fill="#111827" height="72" rx="10" stroke="#38bdf8" stroke-width="2" width="150" x="550" y="103"></rect>
+<text fill="#e5e7eb" font-size="14" font-weight="600" text-anchor="middle" x="625.0" y="144.0">Herramientas</text>
+</g>
+</svg>
+</div>
+<figcaption>Las capas responden a preguntas diferentes: qué, cuáles reglas, cómo y con qué capacidades.</figcaption>
+</figure>
+<div class="inema-prose">
+<h3>Qué es</h3>
+<p data-inema-block="m1-1-t2-p1" id="m1-1-t2-p1">Un prompt pide algo en esta interacción. Una skill guarda un procedimiento especializado. AGENTS.md registra orientaciones duraderas del proyecto. Una herramienta ejecuta una capacidad concreta, como leer un archivo o consultar un servicio. Estas piezas se complementan.</p>
+<h3>Por qué aprender</h3>
+<p data-inema-block="m1-1-t2-p2" id="m1-1-t2-p2">Cuando todo pasa a la regla global, los detalles de una tarea empiezan a influir en tareas sin relación. Cuando todo queda en el prompt, repites instrucciones. Separar los roles ayuda a encontrar el lugar correcto para cada corrección.</p>
+<h3>Conceptos clave</h3>
+</div>
+<div class="key-grid">
+<div class="key">
+<strong>Prompt</strong> intención y datos de la ejecución.</div>
+<div class="key">
+<strong>Skill</strong> método reutilizable.</div>
+<div class="key">
+<strong>AGENTS.md</strong> convenciones del proyecto.</div>
+<div class="key">
+<strong>Herramienta</strong> capacidad y acceso.</div>
+</div>
+<div class="code-box">
+<div class="code-head">
+<span>EJEMPLO COMENTADO · 1.1.2</span>
+<button data-copy="code-1-1-2">Copiar ejemplo</button>
+</div>
+<pre id="code-1-1-2">
+<code>Prompt: “Haga el informe de septiembre.”
+AGENTS.md: “La documentación de este proyecto está en portugués.”
+Skill: “Valide datos, calcule, redacte y verifique.”
+Herramienta: lector de CSV o script de cálculo.</code>
+</pre>
+</div>
+<div class="timeline">
+<h3>Del concepto a la acción</h3>
+<ol>
+<li>Pedido: identificar la condición inicial.</li>
+<li>Orientaciones: aplicar la decisión descrita.</li>
+<li>Procedimiento: comprobar el efecto en el ejemplo.</li>
+<li>Herramientas: registrar la evidencia de salida.</li>
+</ol>
+</div>
+<div class="comparison">
+<div class="compare-good">
+<h3>✓ Haz así</h3>
+<p>Pon la regla de cálculo junto del proceso que la usa.</p>
+</div>
+<div class="compare-bad">
+<h3>✗ Evita este error</h3>
+<p>Trata MCP como sinónimo de skill o como acceso automático.</p>
+</div>
+</div>
+<div class="practice">
+<h3>Practica antes de revelar</h3>
+<p>¿Dónde debe quedar la regla “no inventar números ausentes en el informe”?</p>
+<details>
+<summary>Ver respuesta comentada</summary>
+<p>En el contrato de la skill de informe, con comportamiento para datos ausentes. Si es un requisito general del proyecto, también puede aparecer en la orientación del proyecto, sin duplicar versiones contradictorias.</p>
+</details>
+</div>
+<div class="read-controls">
+<button aria-pressed="false" data-inema-read-toggle="">
+<span aria-hidden="true">✓</span>
+<span data-inema-read-label="">Marcar como leído</span>
+</button>
+<button aria-pressed="false" data-inema-doubt-toggle="">Tengo una duda</button>
+</div>
+</section>
+<section class="lesson" data-inema-topic="modulo-1-1#topico-3" id="topico-3">
+<div class="lesson-head">
+<span class="circle">3</span>
+<h2>Encuentra tareas que merecen una skill</h2>
+</div>
+<figure class="diagram">
+<div aria-label="Diagrama con desplazamiento horizontal en pantallas pequeñas" class="diagram-scroll" role="region" tabindex="0">
+<svg aria-label="Frecuencia → Salida visible → Bajo impacto → Buen primer caso" class="w-full h-auto" role="img" viewbox="0 0 720 200">
+<defs>
+<pattern height="24" id="d1-1-3-grid" patternunits="userSpaceOnUse" width="24">
+<circle cx="2" cy="2" fill="#34d399" opacity=".13" r="1"></circle>
+</pattern>
+<filter id="d1-1-3-glow">
+<fegaussianblur result="b" stddeviation="1.8"></fegaussianblur>
+<femerge>
+<femergenode in="b"></femergenode>
+<femergenode in="SourceGraphic"></femergenode>
+</femerge>
+</filter>
+<marker id="d1-1-3-arrow" markerheight="7" markerwidth="7" orient="auto" refx="6" refy="3.5">
+<path d="M0 0 7 3.5 0 7" fill="#34d399"></path>
+</marker>
+</defs>
+<rect fill="#0f172a" height="200" width="720"></rect>
+<rect fill="url(#d1-1-3-grid)" height="200" width="720"></rect>
+<path d="M170 137 H182 V110 H192" fill="none" marker-end="url(#d1-1-3-arrow)" opacity=".6" stroke="#34d399" stroke-width="1.8"></path>
+<g>
+<rect fill="#111827" filter="url(#d1-1-3-glow)" height="62" rx="10" stroke="#34d399" stroke-width="2" width="150" x="20" y="105"></rect>
+<text fill="#e5e7eb" font-size="14" font-weight="600" text-anchor="middle" x="95.0" y="141.0">Frecuencia</text>
+</g>
+<path d="M345 110 H357 V83 H367" fill="none" marker-end="url(#d1-1-3-arrow)" opacity=".6" stroke="#34d399" stroke-width="1.8"></path>
+<g>
+<rect fill="#111827" height="62" rx="10" stroke="#38bdf8" stroke-width="2" width="150" x="195" y="78"></rect>
+<text fill="#e5e7eb" font-size="14" font-weight="600" text-anchor="middle" x="270.0" y="114.0">Salida visible</text>
+</g>
+<path d="M520 83 H532 V56 H542" fill="none" marker-end="url(#d1-1-3-arrow)" opacity=".6" stroke="#34d399" stroke-width="1.8"></path>
+<g>
+<rect fill="#111827" height="62" rx="10" stroke="#38bdf8" stroke-width="2" width="150" x="370" y="51"></rect>
+<text fill="#e5e7eb" font-size="14" font-weight="600" text-anchor="middle" x="445.0" y="87.0">Bajo impacto</text>
+</g>
+<g>
+<rect fill="#111827" height="62" rx="10" stroke="#38bdf8" stroke-width="2" width="150" x="545" y="24"></rect>
+<text fill="#e5e7eb" font-size="14" font-weight="600" text-anchor="middle" x="620.0" y="60.0">Buen primer caso</text>
+</g>
+</svg>
+</div>
+<figcaption>Elige un caso pequeño lo bastante como para comprobar manualmente la primera ejecución.</figcaption>
+</figure>
+<div class="inema-prose">
+<h3>Qué es</h3>
+<p data-inema-block="m1-1-t3-p1" id="m1-1-t3-p1">El mejor primer candidato es una tarea frecuente con una definición de “bien” que puedas mostrar. No tiene que ser compleja. Una descripción de video, una revisión de texto o un informe corto ya permiten aprender el ciclo completo.</p>
+<h3>Por qué aprender</h3>
+<p data-inema-block="m1-1-t3-p2" id="m1-1-t3-p2">Empezar por “gestionar mi negocio” mezcla planeación, escritura, cuentas y publicación. No puedes localizar el error. Una tarea más pequeña produce un artefacto evaluable y da feedback más rápido, antes de conectar sistemas importantes.</p>
+<h3>Conceptos clave</h3>
+</div>
+<div class="key-grid">
+<div class="key">
+<strong>Frecuencia</strong> cuántas veces se repite.</div>
+<div class="key">
+<strong>Costo del error</strong> lo que una falla causa.</div>
+<div class="key">
+<strong>Observabilidad</strong> cómo reconocer un acierto.</div>
+<div class="key">
+<strong>Alcance</strong>donde termina la tarea.</div>
+</div>
+<div class="code-box">
+<div class="code-head">
+<span>EJEMPLO COMENTADO · 1.1.3</span>
+<button data-copy="code-1-1-3">Copiar ejemplo</button>
+</div>
+<pre id="code-1-1-3">
+<code>Candidato A: revisar un párrafo → fácil de comparar.
+Candidato B: preparar informe local → números verificables.
+Candidato C: operar toda la empresa → alcance demasiado amplio.</code>
+</pre>
+</div>
+<div class="comparison">
+<div class="compare-good">
+<h3>✓ Haz así</h3>
+<p>Empiece con una salida local que pueda revisarse.</p>
+</div>
+<div class="compare-bad">
+<h3>✗ Evita este error</h3>
+<p>Conectar la primera versión directamente con envíos o cambios externos.</p>
+</div>
+</div>
+<div class="practice">
+<h3>Practica antes de revelar</h3>
+<p>Compare dos de sus tareas usando frecuencia, claridad de salida y costo del error.</p>
+<details>
+<summary>Ver respuesta comentada</summary>
+<p>Prefiera la que combina repetición, salida clara y revisión barata. Una tarea menos frecuente puede ganar si el reproceso es alto; justifique el criterio, en lugar de usar una puntuación sin contexto.</p>
+</details>
+</div>
+<div class="read-controls">
+<button aria-pressed="false" data-inema-read-toggle="">
+<span aria-hidden="true">✓</span>
+<span data-inema-read-label="">Marcar como leído</span>
+</button>
+<button aria-pressed="false" data-inema-doubt-toggle="">Tengo una duda</button>
+</div>
+</section>
+<section class="lesson" data-inema-topic="modulo-1-1#topico-4" id="topico-4">
+<div class="lesson-head">
+<span class="circle">4</span>
+<h2>Dibuje el contrato de entrada y salida</h2>
+</div>
+<figure class="diagram">
+<div aria-label="Diagrama con desplazamiento horizontal en pantallas pequeñas" class="diagram-scroll" role="region" tabindex="0">
+<svg aria-label="CSV recibido → ¿Campos válidos? → Cálculos → Informe + QA" class="w-full h-auto" role="img" viewbox="0 0 720 200">
+<defs>
+<pattern height="24" id="d1-1-4-grid" patternunits="userSpaceOnUse" width="24">
+<circle cx="2" cy="2" fill="#34d399" opacity=".13" r="1"></circle>
+</pattern>
+<filter id="d1-1-4-glow">
+<fegaussianblur result="b" stddeviation="1.8"></fegaussianblur>
+<femerge>
+<femergenode in="b"></femergenode>
+<femergenode in="SourceGraphic"></femergenode>
+</femerge>
+</filter>
+<marker id="d1-1-4-arrow" markerheight="7" markerwidth="7" orient="auto" refx="6" refy="3.5">
+<path d="M0 0 7 3.5 0 7" fill="#34d399"></path>
+</marker>
+</defs>
+<rect fill="#0f172a" height="200" width="720"></rect>
+<rect fill="url(#d1-1-4-grid)" height="200" width="720"></rect>
+<path d="M175 100 H193" fill="none" marker-end="url(#d1-1-4-arrow)" opacity=".6" stroke="#34d399" stroke-width="1.8"></path>
+<g>
+<rect fill="#111827" filter="url(#d1-1-4-glow)" height="74" rx="10" stroke="#34d399" stroke-width="2" width="150" x="20" y="63"></rect>
+<text fill="#e5e7eb" font-size="14" font-weight="600" text-anchor="middle" x="95.0" y="105.0">CSV recibido</text>
+</g>
+<path d="M350 100 H368" fill="none" marker-end="url(#d1-1-4-arrow)" opacity=".6" stroke="#34d399" stroke-width="1.8"></path>
+<g>
+<rect fill="#111827" height="74" rx="10" stroke="#38bdf8" stroke-width="2" width="150" x="195" y="63"></rect>
+<text fill="#e5e7eb" font-size="14" font-weight="600" text-anchor="middle" x="270.0" y="105.0">¿Campos válidos?</text>
+</g>
+<path d="M525 100 H543" fill="none" marker-end="url(#d1-1-4-arrow)" opacity=".6" stroke="#34d399" stroke-width="1.8"></path>
+<g>
+<rect fill="#111827" height="74" rx="10" stroke="#38bdf8" stroke-width="2" width="150" x="370" y="63"></rect>
+<text fill="#e5e7eb" font-size="14" font-weight="600" text-anchor="middle" x="445.0" y="105.0">Cálculos</text>
+</g>
+<g>
+<rect fill="#111827" height="74" rx="10" stroke="#38bdf8" stroke-width="2" width="150" x="545" y="63"></rect>
+<text fill="#e5e7eb" font-size="14" font-weight="600" text-anchor="middle" x="620.0" y="105.0">Informe + QA</text>
+</g>
+</svg>
+</div>
+<figcaption>La validación viene antes de la redacción: escribir bien no arregla una columna que no existe.</figcaption>
+</figure>
+<div class="inema-prose">
+<h3>Qué es</h3>
+<p data-inema-block="m1-1-t4-p1" id="m1-1-t4-p1">El contrato describe lo que debe llegar, qué se producirá y qué sucede cuando falta información. En nuestro laboratorio, el CSV contiene fecha, canal y valor. La salida trae período observado, total, totales por canal y pendientes.</p>
+<h3>Por qué aprender</h3>
+<p data-inema-block="m1-1-t4-p2" id="m1-1-t4-p2">Los datos faltantes no deben convertirse en suposiciones silenciosas. Si “valor” no existe, la skill no puede calcular el faturamiento. Una respuesta útil identifica el campo faltante, detiene solo la etapa dependiente y preserva el material original.</p>
+<h3>Conceptos clave</h3>
+</div>
+<div class="key-grid">
+<div class="key">
+<strong>Precondición</strong>datos mínimos.</div>
+<div class="key">
+<strong>Poscondición</strong>contenido obligatorio.</div>
+<div class="key">
+<strong>Invariante</strong>algo que no puede cambiar.</div>
+<div class="key">
+<strong>Falla prevista</strong>respuesta útil sin inventar.</div>
+</div>
+<div class="code-box">
+<div class="code-head">
+<span>EJEMPLO COMENTADO · 1.1.4</span>
+<button data-copy="code-1-1-4">Copiar ejemplo</button>
+</div>
+<pre id="code-1-1-4">
+<code>Entrada: UTF-8, columnas fecha,canal,valor.
+Valor: decimal con punto; moneda BRL definida por el ejercicio.
+Salida: relatorio.md + qa.json.
+Sin columna obligatoria: informar el error y no generar informe.</code>
+</pre>
+</div>
+<div class="comparison">
+<div class="compare-good">
+<h3>✓ Haz así</h3>
+<p>Defina el formato de fecha y la unidad monetaria.</p>
+</div>
+<div class="compare-bad">
+<h3>✗ Evita este error</h3>
+<p>Suma valores de monedas diferentes sin una regla explícita.</p>
+</div>
+</div>
+<aside class="tip">
+<strong>Llévalo a tu skill.</strong> La validación viene antes de la redacción: escribir bien no arregla una columna que no existe. Use este principio para revisar el ejemplo antes de avanzar.</aside>
+<div class="practice">
+<h3>Practica antes de revelar</h3>
+<p>Agregue al contrato una condición de parada y una limitación.</p>
+<details>
+<summary>Ver respuesta comentada</summary>
+<p>Deténgase si hay una fecha inválida; limite el análisis a totales descriptivos, sin inferir causas del cambio en las ventas. El contrato debe decir qué hacer, no solo enumerar prohibiciones.</p>
+</details>
+</div>
+<div class="read-controls">
+<button aria-pressed="false" data-inema-read-toggle="">
+<span aria-hidden="true">✓</span>
+<span data-inema-read-label="">Marcar como leído</span>
+</button>
+<button aria-pressed="false" data-inema-doubt-toggle="">Tengo una duda</button>
+</div>
+</section>
+<section class="lesson" data-inema-topic="modulo-1-1#topico-5" id="topico-5">
+<div class="lesson-head">
+<span class="circle">5</span>
+<h2>Lea críticamente la promesa del video</h2>
+</div>
+<figure class="diagram">
+<div aria-label="Diagrama con desplazamiento horizontal en pantallas pequeñas" class="diagram-scroll" role="region" tabindex="0">
+<svg aria-label="Relato del autor → Hipótesis → Prueba local → Decisión limitada" class="w-full h-auto" role="img" viewbox="0 0 720 200">
+<defs>
+<pattern height="24" id="d1-1-5-grid" patternunits="userSpaceOnUse" width="24">
+<circle cx="2" cy="2" fill="#34d399" opacity=".13" r="1"></circle>
+</pattern>
+<filter id="d1-1-5-glow">
+<fegaussianblur result="b" stddeviation="1.8"></fegaussianblur>
+<femerge>
+<femergenode in="b"></femergenode>
+<femergenode in="SourceGraphic"></femergenode>
+</femerge>
+</filter>
+<marker id="d1-1-5-arrow" markerheight="7" markerwidth="7" orient="auto" refx="6" refy="3.5">
+<path d="M0 0 7 3.5 0 7" fill="#34d399"></path>
+</marker>
+</defs>
+<rect fill="#0f172a" height="200" width="720"></rect>
+<rect fill="url(#d1-1-5-grid)" height="200" width="720"></rect>
+<path d="M170 137 H182 V110 H192" fill="none" marker-end="url(#d1-1-5-arrow)" opacity=".6" stroke="#34d399" stroke-width="1.8"></path>
+<g>
+<rect fill="#111827" filter="url(#d1-1-5-glow)" height="62" rx="10" stroke="#34d399" stroke-width="2" width="150" x="20" y="105"></rect>
+<text fill="#e5e7eb" font-size="14" font-weight="600" text-anchor="middle" x="95.0" y="141.0">Relato del autor</text>
+</g>
+<path d="M345 110 H357 V83 H367" fill="none" marker-end="url(#d1-1-5-arrow)" opacity=".6" stroke="#34d399" stroke-width="1.8"></path>
+<g>
+<rect fill="#111827" height="62" rx="10" stroke="#38bdf8" stroke-width="2" width="150" x="195" y="78"></rect>
+<text fill="#e5e7eb" font-size="14" font-weight="600" text-anchor="middle" x="270.0" y="114.0">Hipótesis</text>
+</g>
+<path d="M520 83 H532 V56 H542" fill="none" marker-end="url(#d1-1-5-arrow)" opacity=".6" stroke="#34d399" stroke-width="1.8"></path>
+<g>
+<rect fill="#111827" height="62" rx="10" stroke="#38bdf8" stroke-width="2" width="150" x="370" y="51"></rect>
+<text fill="#e5e7eb" font-size="14" font-weight="600" text-anchor="middle" x="445.0" y="87.0">Prueba local</text>
+</g>
+<g>
+<rect fill="#111827" height="62" rx="10" stroke="#38bdf8" stroke-width="2" width="150" x="545" y="24"></rect>
+<text fill="#e5e7eb" font-size="14" font-weight="600" text-anchor="middle" x="620.0" y="60.0">Decisión limitada</text>
+</g>
+</svg>
+</div>
+<figcaption>Use la referencia para formular hipótesis; use sus casos para decidir.</figcaption>
+</figure>
+<div class="inema-prose">
+<h3>Qué es</h3>
+<p data-inema-block="m1-1-t5-p1" id="m1-1-t5-p1">Los seis pasos son una propuesta práctica del autor: partir del resultado, delimitar tarea, calibrar libertad, verificar, comparar configuraciones e incorporar feedback. La expresión “mejor que 99%” es el título promocional de la referencia, no un resultado medido en este curso.</p>
+<h3>Por qué aprender</h3>
+<p data-inema-block="m1-1-t5-p2" id="m1-1-t5-p2">El video muestra salidas diferentes entre modelos en una tarea visual. Esto es un caso de estudio útil, pero no establece un ranking universal. Los tiempos observados en esa ejecución tampoco garantizan duración, precio o calidad en tu cuenta.</p>
+<h3>Conceptos clave</h3>
+</div>
+<div class="key-grid">
+<div class="key">
+<strong>El relato no equivale a benchmark.</strong>
+</div>
+<div class="key">
+<strong>La repetibilidad exige varios casos.</strong>
+</div>
+<div class="key">
+<strong>Las herramientas dependen de acceso real.</strong>
+</div>
+<div class="key">
+<strong>La autoevaluación exige evidencia.</strong>
+</div>
+</div>
+<div class="code-box">
+<div class="code-head">
+<span>EJEMPLO COMENTADO · 1.1.5</span>
+<button data-copy="code-1-1-5">Copiar ejemplo</button>
+</div>
+<pre id="code-1-1-5">
+<code>Hipótesis: “Una configuración más barata basta para resúmenes.”
+Prueba: mismos casos, misma rúbrica, más de una ejecución.
+Conclusión válida: “En esta muestra, pasó los criterios.”</code>
+</pre>
+</div>
+<div class="timeline">
+<h3>Del concepto a la acción</h3>
+<ol>
+<li>Relato del autor: identificar la condición inicial.</li>
+<li>Hipótesis: aplicar la decisión descrita.</li>
+<li>Prueba local: verificar el efecto en el ejemplo.</li>
+<li>Decisión limitada: registrar la evidencia de salida.</li>
+</ol>
+</div>
+<div class="comparison">
+<div class="compare-good">
+<h3>✓ Haz así</h3>
+<p>Identifique qué conclusiones dependen del contexto.</p>
+</div>
+<div class="compare-bad">
+<h3>✗ Evita este error</h3>
+<p>Repetir porcentajes de calidad sin experimento.</p>
+</div>
+</div>
+<div class="practice">
+<h3>Practica antes de revelar</h3>
+<p>Transforme “el modelo caro siempre es mejor” en una hipótesis verificable.</p>
+<details>
+<summary>Ver respuesta comentada</summary>
+<p>“En nuestros casos de selección de imágenes, la configuración A tendrá menos imágenes fuera de contexto que B, usando el mismo criterio de evaluación.” Ahora existe una comparación delimitada.</p>
+</details>
+</div>
+<div class="read-controls">
+<button aria-pressed="false" data-inema-read-toggle="">
+<span aria-hidden="true">✓</span>
+<span data-inema-read-label="">Marcar como leído</span>
+</button>
+<button aria-pressed="false" data-inema-doubt-toggle="">Tengo una duda</button>
+</div>
+</section>
+<section class="lesson" data-inema-topic="modulo-1-1#topico-6" id="topico-6">
+<div class="lesson-head">
+<span class="circle">6</span>
+<h2>Prepare su laboratorio de aprendizaje</h2>
+</div>
+<figure class="diagram">
+<div aria-label="Diagrama con desplazamiento horizontal en pantallas pequeñas" class="diagram-scroll" role="region" tabindex="0">
+<svg aria-label="Preparar → Ejecutar → Inspeccionar → Registrar" class="w-full h-auto" role="img" viewbox="0 0 720 200">
+<defs>
+<pattern height="24" id="d1-1-6-grid" patternunits="userSpaceOnUse" width="24">
+<circle cx="2" cy="2" fill="#34d399" opacity=".13" r="1"></circle>
+</pattern>
+<filter id="d1-1-6-glow">
+<fegaussianblur result="b" stddeviation="1.8"></fegaussianblur>
+<femerge>
+<femergenode in="b"></femergenode>
+<femergenode in="SourceGraphic"></femergenode>
+</femerge>
+</filter>
+<marker id="d1-1-6-arrow" markerheight="7" markerwidth="7" orient="auto" refx="6" refy="3.5">
+<path d="M0 0 7 3.5 0 7" fill="#34d399"></path>
+</marker>
+</defs>
+<rect fill="#0f172a" height="200" width="720"></rect>
+<rect fill="url(#d1-1-6-grid)" height="200" width="720"></rect>
+<path d="M170 137 H182 V110 H192" fill="none" marker-end="url(#d1-1-6-arrow)" opacity=".6" stroke="#34d399" stroke-width="1.8"></path>
+<g>
+<rect fill="#111827" filter="url(#d1-1-6-glow)" height="62" rx="10" stroke="#34d399" stroke-width="2" width="150" x="20" y="105"></rect>
+<text fill="#e5e7eb" font-size="14" font-weight="600" text-anchor="middle" x="95.0" y="141.0">Preparar</text>
+</g>
+<path d="M345 110 H357 V83 H367" fill="none" marker-end="url(#d1-1-6-arrow)" opacity=".6" stroke="#34d399" stroke-width="1.8"></path>
+<g>
+<rect fill="#111827" height="62" rx="10" stroke="#38bdf8" stroke-width="2" width="150" x="195" y="78"></rect>
+<text fill="#e5e7eb" font-size="14" font-weight="600" text-anchor="middle" x="270.0" y="114.0">Ejecutar</text>
+</g>
+<path d="M520 83 H532 V56 H542" fill="none" marker-end="url(#d1-1-6-arrow)" opacity=".6" stroke="#34d399" stroke-width="1.8"></path>
+<g>
+<rect fill="#111827" height="62" rx="10" stroke="#38bdf8" stroke-width="2" width="150" x="370" y="51"></rect>
+<text fill="#e5e7eb" font-size="14" font-weight="600" text-anchor="middle" x="445.0" y="87.0">Inspeccionar</text>
+</g>
+<g>
+<rect fill="#111827" height="62" rx="10" stroke="#38bdf8" stroke-width="2" width="150" x="545" y="24"></rect>
+<text fill="#e5e7eb" font-size="14" font-weight="600" text-anchor="middle" x="620.0" y="60.0">Registrar</text>
+</g>
+</svg>
+</div>
+<figcaption>El laboratorio produce artefactos que usted puede abrir y comprobar sin confiar solo en el relato del agente.</figcaption>
+</figure>
+<div class="inema-prose">
+<h3>Qué es</h3>
+<p data-inema-block="m1-1-t6-p1" id="m1-1-t6-p1">Trabajarás con datos sintéticos y archivos locales. Descarga el kit en la página inicial, abre la carpeta en Codex y mantén entrada, salida y evidencias separadas. El ejercicio no exige una API paga ni una cuenta conectada a CRM.</p>
+<h3>Por qué aprender</h3>
+<p data-inema-block="m1-1-t6-p2" id="m1-1-t6-p2">Separar carpetas hace posible rehacer una ejecución sin reemplazar el original. Con cada cambio, puedes comparar el informe anterior con el nuevo y verificar si la corrección trajo algún efecto no deseado.</p>
+<h3>Conceptos clave</h3>
+</div>
+<div class="key-grid">
+<div class="key">
+<strong>dados/</strong>entradas inmutables.</div>
+<div class="key">
+<strong>saidas/</strong>resultados de la ejecución.</div>
+<div class="key">
+<strong>evidencias/</strong>pruebas y observaciones.</div>
+<div class="key">
+<strong>SKILL.md</strong>procedimiento versionable.</div>
+</div>
+<div class="code-box">
+<div class="code-head">
+<span>EJEMPLO COMENTADO · 1.1.6</span>
+<button data-copy="code-1-1-6">Copiar ejemplo</button>
+</div>
+<pre id="code-1-1-6">
+<code>laboratorio/
+  dados/vendas.csv
+  saidas/
+  evidencias/
+  .agents/skills/relatorio-semanal/SKILL.md</code>
+</pre>
+</div>
+<div class="comparison">
+<div class="compare-good">
+<h3>✓ Haz así</h3>
+<p>Guarde una copia de la entrada usada en cada comparación.</p>
+</div>
+<div class="compare-bad">
+<h3>✗ Evita este error</h3>
+<p>Cambiar datos, modelo e instrucción al mismo tiempo.</p>
+</div>
+</div>
+<div class="practice">
+<h3>Practica antes de revelar</h3>
+<p>Abra el CSV del kit y calcule manualmente el total de las cuatro líneas.</p>
+<details>
+<summary>Ver respuesta comentada</summary>
+<p>Los valores 120,50 + 80,00 + 199,50 + 100,00 totalizan R$ 500,00. Esta cuenta independiente será una referencia para verificar el primer informe.</p>
+</details>
+</div>
+<div class="read-controls">
+<button aria-pressed="false" data-inema-read-toggle="">
+<span aria-hidden="true">✓</span>
+<span data-inema-read-label="">Marcar como leído</span>
+</button>
+<button aria-pressed="false" data-inema-doubt-toggle="">Tengo una duda</button>
+</div>
+</section>
+<section class="quiz" data-inema-check="q-1-1">
+<span class="eyebrow">VERIFICACIÓN SIN BLOQUEO</span>
+<h2>Verifique su comprensión</h2>
+<p>Una skill necesita acceder a un CRM. ¿Qué proporciona ese acceso?</p>
+<div class="quiz-options">
+<button data-inema-check-option="0">El texto de la skill crea la conexión.</button>
+<button data-inema-check-option="1">Una herramienta disponible, con acceso autorizado.</button>
+<button data-inema-check-option="2">El nombre de la carpeta habilita cualquier integración.</button>
+</div>
+<div aria-live="polite" data-inema-check-feedback="" role="status">
+</div>
+</section>
+<section class="module-summary">
+<h2>¿Qué te llevas de este módulo?</h2>
+<p>Elija una tarea repetible y explique dónde entra la skill.</p>
+<ul>
+<li>Separe la receta de quien cocina.</li>
+<li>Diferencie prompt, skill, regla y herramienta.</li>
+<li>Encuentre tareas que merecen una skill.</li>
+<li>Dibuje el contrato de entrada y salida.</li>
+<li>Lea críticamente la promesa del video.</li>
+<li>Prepare su laboratorio de aprendizaje.</li>
+</ul>
+<p>Próxima acción: guarde el ejercicio en su laboratorio y registre lo que todavía necesita revisión.</p>
+</section>
+<div class="actions">
+<a class="btn" href="index.html">← Mapa del itinerario</a>
+<a class="btn cta" href="../trilha1/modulo-1-2.html">Siguiente: Empiece por el resultado aprobado →</a>
+</div>
+</article>
+</div>
+<p class="muted">Referencia de este módulo: transcripción proporcionada y <a href="../../index.html#fontes">fuentes y notas técnicas del curso</a>.</p>
+</main>
+<footer>
+<div class="wrap">Agent Skills · INEMA.CLUB · v1.1.0 · Curso en portugués<br/>Material educativo original basado en la referencia indicada. Progreso guardado en este navegador; exporte una copia en Mi recorrido.<br/>
+<a href="../../index.html#fontes">Referencias y criterios editoriales</a> · <a download="" href="../../materiais/kit-agent-skills.zip">Descargar kit de práctica</a>
+</div>
+</footer>
+<dialog aria-label="Lectura del módulo" id="module-modal">
+<button data-close-modal="">Cerrar módulo</button>
+<iframe title="Contenido completo del módulo">
+</iframe>
+</dialog>
+<script id="quiz-data" type="application/json">{"id": "q-1-1", "q": "Una skill necesita acceder a un CRM. ¿Qué proporciona ese acceso?", "options": ["El texto de la skill crea la conexión.", "Una herramienta disponible, con acceso autorizado.", "El nombre de la carpeta habilita cualquier integración."], "answer": "1", "explain": {"0": "La skill guía el procedimiento. La conexión y los permisos pertenecen al entorno y a las herramientas.", "1": "La skill guía el procedimiento. La conexión y los permisos pertenecen al entorno y a las herramientas.", "2": "La skill guía el procedimiento. La conexión y los permisos pertenecen al entorno y a las herramientas."}}</script>
+<script src="../../assets/learn.js">
+</script>
+<script src="../../assets/course.js">
+</script>
+<nav aria-label="Idioma del curso" data-course-languages=""><a href="../../../curso/trilha1/modulo-1-1.html" hreflang="pt-BR" lang="pt-BR">Português</a><a href="../../../en/curso/trilha1/modulo-1-1.html" hreflang="en" lang="en">English</a><a aria-current="page" href="modulo-1-1.html" hreflang="es" lang="es">Español</a></nav><script data-course-language-hash="">document.querySelectorAll('[data-course-languages] a').forEach(function(a){a.addEventListener('click',function(){a.href=a.getAttribute('href').split('#')[0]+location.hash;});});</script></body>
+</html>

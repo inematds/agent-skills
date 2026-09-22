@@ -1,0 +1,953 @@
+<!DOCTYPE html>
+<html class="dark" lang="es">
+<head>
+<script>
+(function () {
+  try {
+    var html = document.documentElement;
+    var DEF = { theme: 'inema-dark', font: 'inter', fontScale: 100, lineWidth: 68, leading: 1.7, accent: 'emerald' };
+    function clone(o) { var r = {}; for (var x in o) r[x] = o[x]; return r; }
+    var p = clone(DEF);
+    try {
+      var raw = localStorage.getItem('inema.prefs');
+      if (raw) {
+        var parsed = JSON.parse(raw);
+        if (parsed && typeof parsed === 'object') {
+          for (var k in DEF) if (parsed[k] != null) p[k] = parsed[k];
+        }
+      } else {
+        // fallback ao tema legado do v1
+        var legacy = localStorage.getItem('theme');
+        if (legacy === 'light') p.theme = 'claro';
+        else if (legacy === 'dark') p.theme = 'inema-dark';
+      }
+    } catch (e) { p = clone(DEF); }
+
+    // mapa tema -> (.dark on/off, data-theme, color-scheme)
+    var THEMES = {
+      'inema-dark': { dark: true,  attr: null,        cs: 'dark'  },
+      'claro':      { dark: false, attr: null,        cs: 'light' },
+      'sepia':      { dark: false, attr: 'sepia',     cs: 'light' },
+      'foco':       { dark: null,  attr: 'foco',      cs: null    },  // herda eixo atual
+      'contraste':  { dark: true,  attr: 'contraste', cs: 'dark'  }
+    };
+    var t = THEMES[p.theme] || THEMES['inema-dark'];
+
+    if (t.dark === true) html.classList.add('dark');
+    else if (t.dark === false) html.classList.remove('dark');
+    // 'foco' (null) preserva o que ja houver no atributo class do <html>
+
+    if (t.attr) html.setAttribute('data-theme', t.attr);
+    else html.removeAttribute('data-theme');
+
+    html.style.colorScheme = (t.cs ? t.cs : (html.classList.contains('dark') ? 'dark' : 'light'));
+
+    html.setAttribute('data-font', p.font || 'inter');
+    html.setAttribute('data-accent', p.accent || 'emerald');
+
+    // variaveis de leitura (espelham learn.js / learn.css) ANTES do paint
+    var s = html.style;
+    var scale = (+p.fontScale || 100);
+    s.setProperty('--inema-font-scale', (scale / 100).toString());
+    s.setProperty('font-size', scale + '%');               // :root em %, nunca px
+    s.setProperty('--measure', (+p.lineWidth || 68) + 'ch');
+    s.setProperty('--lh-body', (+p.leading || 1.7).toString());
+    var fam = p.font === 'system'
+      ? 'system-ui, -apple-system, "Segoe UI", Roboto, sans-serif'
+      : (p.font === 'leitura'
+        ? '"Atkinson Hyperlegible", "Inter", system-ui, sans-serif'
+        : '"Inter", system-ui, sans-serif');
+    s.setProperty('--font-body', fam);
+
+    var ACC = {
+      emerald: [152, 76, 45], blue: [217, 91, 60], purple: [258, 90, 66],
+      amber: [38, 92, 50], teal: [174, 72, 41], rose: [350, 89, 60]
+    };
+    var a = ACC[p.accent] || ACC.emerald;
+    s.setProperty('--accent-h', a[0] + '');
+    s.setProperty('--accent-s', a[1] + '%');
+    s.setProperty('--accent-l', a[2] + '%');
+    s.setProperty('--accent', 'hsl(' + a[0] + ' ' + a[1] + '% ' + a[2] + '%)');
+  } catch (err) {
+    // qualquer falha => default dark, preserva a marca
+    try { document.documentElement.classList.add('dark'); document.documentElement.style.colorScheme = 'dark'; } catch (e) {}
+  }
+})();
+</script>
+<meta charset="utf-8"/>
+<meta content="width=device-width, initial-scale=1" name="viewport"/>
+<title>Evoluciona y entrega tu primera skill | Agent Skills · INEMA</title>
+<meta content="Curso completo de habilidades en Codex: ingeniería inversa, gatillos, libertad, verificación, costo y mejora continua. Formato INEMA v2." name="description"/>
+<meta content="agent-skills-codex-es" name="inema-course"/>
+<meta content="../../" name="course-root"/>
+<script data-inema-manifest="" type="application/json">{"course": "agent-skills-codex-es", "tracks": [{"n": "1", "title": "Fundamentos", "modules": [{"id": "1-1", "title": "Entiende qué enseña una skill", "topics": 6, "href": "curso/trilha1/modulo-1-1.html"}, {"id": "1-2", "title": "Empieza por el resultado aprobado", "topics": 6, "href": "curso/trilha1/modulo-1-2.html"}]}, {"n": "2", "title": "Construcción", "modules": [{"id": "2-1", "title": "Construye una skill con un trabajo claro", "topics": 6, "href": "curso/trilha2/modulo-2-1.html"}, {"id": "2-2", "title": "Ajusta la libertad del agente", "topics": 6, "href": "curso/trilha2/modulo-2-2.html"}]}, {"n": "3", "title": "Verificación", "modules": [{"id": "3-1", "title": "Verifica con evidencias", "topics": 6, "href": "curso/trilha3/modulo-3-1.html"}, {"id": "3-2", "title": "Haz una revisión visual de verdad", "topics": 6, "href": "curso/trilha3/modulo-3-2.html"}]}, {"n": "4", "title": "Evolución", "modules": [{"id": "4-1", "title": "Compara calidad, costo y esfuerzo", "topics": 6, "href": "curso/trilha4/modulo-4-1.html"}, {"id": "4-2", "title": "Evoluciona y entrega tu primera skill", "topics": 6, "href": "curso/trilha4/modulo-4-2.html"}]}]}</script>
+<link href="../../assets/favicon.svg" rel="icon" type="image/svg+xml"/>
+<link href="../../assets/course.css" rel="stylesheet"/>
+<link href="../../assets/learn.css" rel="stylesheet"/>
+<link href="../../assets/patches.css" rel="stylesheet"/>
+<link href="https://inematds.github.io/agent-skills/curso/trilha4/modulo-4-2.html" hreflang="pt-BR" rel="alternate"/><link href="https://inematds.github.io/agent-skills/en/curso/trilha4/modulo-4-2.html" hreflang="en" rel="alternate"/><link href="https://inematds.github.io/agent-skills/es/curso/trilha4/modulo-4-2.html" hreflang="es" rel="alternate"/><link href="https://inematds.github.io/agent-skills/curso/trilha4/modulo-4-2.html" hreflang="x-default" rel="alternate"/><link href="https://inematds.github.io/agent-skills/es/curso/trilha4/modulo-4-2.html" rel="canonical"/><style id="course-language-css">[data-course-languages]{position:fixed;bottom:0;left:0;right:0;z-index:60;display:flex;gap:1.25rem;padding:.65rem;justify-content:center;background:#111827;color:#f3f4f6}[data-course-languages] a{color:inherit;font:14px system-ui}[data-course-languages] [aria-current]{font-weight:bold;text-decoration:underline}[data-course-languages] a:focus-visible{outline:2px solid #38bdf8;outline-offset:4px}body{padding-bottom:75px}</style></head>
+<body class="track-4">
+<a class="skip" href="#conteudo">Saltar al contenido</a>
+<nav aria-label="Navegación principal" class="site-nav">
+<div class="wrap nav-row">
+<a aria-label="Agent Skills, inicio" class="brand" href="../../index.html">
+<svg aria-hidden="true" fill="none" viewbox="0 0 32 32">
+<path d="m11 7-8 9 8 9M21 7l8 9-8 9M18 4l-4 24" stroke="currentColor" stroke-width="2.5"></path>
+</svg>
+<span class="brand-name">AGENT SKILLS</span>
+</a>
+<a class="text-sky-400" href="https://inema.club" rel="noopener" target="_blank">INEMA.CLUB</a>
+<div class="nav-links">
+<a class="" href="../../curso/trilha1/index.html">
+<span class="nav-full">Fundamentos</span>
+<span class="nav-short">T1</span>
+</a>
+<a class="" href="../../curso/trilha2/index.html">
+<span class="nav-full">Construcción</span>
+<span class="nav-short">T2</span>
+</a>
+<a class="" href="../../curso/trilha3/index.html">
+<span class="nav-full">Verificación</span>
+<span class="nav-short">T3</span>
+</a>
+<a aria-current="page" class="active" href="../../curso/trilha4/index.html">
+<span class="nav-full">Evolución</span>
+<span class="nav-short">T4</span>
+</a>
+</div>
+<button aria-label="Alternar tema claro y oscuro" class="theme-toggle" id="theme-toggle">
+<svg aria-hidden="true" fill="none" viewbox="0 0 24 24">
+<circle cx="12" cy="12" r="4" stroke="currentColor" stroke-width="1.6"></circle>
+<path d="M12 1v3m0 16v3M1 12h3m16 0h3M4 4l2 2m12 12 2 2M4 20l2-2M18 6l2-2" stroke="currentColor" stroke-width="1.6"></path>
+</svg>
+</button>
+</div>
+</nav>
+<div class="wrap studybar">
+<div class="tools">
+<button data-inema-journey-open="">Mi recorrido</button>
+<button data-course-resume="">Continuar leyendo</button>
+<div class="appearance-wrap">
+<button aria-controls="appearance" aria-expanded="false" data-inema-appearance-toggle="#appearance">Apariencia</button>
+<div class="inema-appearance-pop" data-inema-appearance="" data-open="false" id="appearance">
+<h3>Tema</h3>
+<div class="inema-segment">
+<button aria-pressed="false" data-inema-set-theme="inema-dark">Oscuro</button>
+<button aria-pressed="false" data-inema-set-theme="claro">Claro</button>
+<button aria-pressed="false" data-inema-set-theme="sepia">Sepia</button>
+<button aria-pressed="false" data-inema-set-theme="foco">Enfoque</button>
+<button aria-pressed="false" data-inema-set-theme="contraste">Alto contraste</button>
+</div>
+<h3>Fuente</h3>
+<div class="inema-segment">
+<button aria-pressed="false" data-inema-set-font="inter">Inter / sistema</button>
+<button aria-pressed="false" data-inema-set-font="system">Sistema</button>
+<button aria-pressed="false" data-inema-set-font="leitura">Lectura</button>
+</div>
+<h3>Tamaño</h3>
+<div class="inema-segment">
+<button aria-pressed="false" data-inema-set-fontscale="100">100%</button>
+<button aria-pressed="false" data-inema-set-fontscale="112">112%</button>
+<button aria-pressed="false" data-inema-set-fontscale="125">125%</button>
+</div>
+<h3>Ancho de texto</h3>
+<div class="inema-segment">
+<button aria-pressed="false" data-inema-set-linewidth="60">Estrecha</button>
+<button aria-pressed="false" data-inema-set-linewidth="68">Media</button>
+<button aria-pressed="false" data-inema-set-linewidth="75">Ancha</button>
+</div>
+<h3>Interlineado</h3>
+<div class="inema-segment">
+<button aria-pressed="false" data-inema-set-leading="1.45">Compacta</button>
+<button aria-pressed="false" data-inema-set-leading="1.7">Cómoda</button>
+</div>
+<h3>Acento de los controles</h3>
+<div class="inema-segment">
+<button aria-pressed="false" data-inema-set-accent="emerald">Verde</button>
+<button aria-pressed="false" data-inema-set-accent="blue">Azul</button>
+<button aria-pressed="false" data-inema-set-accent="purple">Púrpura</button>
+<button aria-pressed="false" data-inema-set-accent="amber">Ámbar</button>
+<button aria-pressed="false" data-inema-set-accent="teal">Turquesa</button>
+<button aria-pressed="false" data-inema-set-accent="rose">Rosa</button>
+</div>
+</div>
+</div>
+</div>
+<div aria-label="Progreso de lectura" aria-valuemax="100" aria-valuemin="0" aria-valuenow="0" class="meter" data-inema-meter="curso" role="progressbar">
+<div class="meter-top">
+<span data-inema-meter-frac="">0 de 0</span>
+<span data-inema-meter-pct="">0%</span>
+</div>
+<div class="inema-bar">
+<div data-inema-meter-fill="">
+</div>
+</div>
+</div>
+</div>
+<noscript>
+<p class="wrap no-script">Puedes leer todas las lecciones sin JavaScript. El progreso, las notas y los controles de apariencia necesitan JavaScript.</p>
+</noscript>
+<main class="wrap" id="conteudo">
+<div class="breadcrumb">
+<a href="../../index.html">Inicio</a> / <a href="index.html">Evolución</a> / Módulo 4.2</div>
+<header class="hero">
+<span class="pill">MÓDULO 4.2</span>
+<h1>Evoluciona y entrega tu primera skill</h1>
+<p class="lead">Aplica el método de la bicicleta y reúne un paquete de trabajo verificable.</p>
+<p>
+<strong>Al final:</strong> Entregar una skill, casos de prueba, QA e historial de mejora.</p>
+</header>
+<div class="stats">
+<div class="stat">
+<strong>6</strong>
+<span>tópicos</span>
+</div>
+<div class="stat">
+<strong>75 min</strong>
+<span>estimación con práctica</span>
+</div>
+<div class="stat">
+<strong>6</strong>
+<span>ejercicios comentados</span>
+</div>
+<div class="stat">
+<strong>1</strong>
+<span>verificación final</span>
+</div>
+</div>
+<div class="reading-layout">
+<aside aria-label="Índice del módulo" class="toc" data-inema-toc="">
+<h2>En este módulo</h2>
+<span data-inema-section-counter="">Sección 1 de 6</span>
+<ol>
+<li>
+<a href="#topico-1">1. Aumenta autonomía según la evidencia</a>
+</li>
+<li>
+<a href="#topico-2">2. Da feedback que identifique la corrección más pequeña</a>
+</li>
+<li>
+<a href="#topico-3">3. Convierte el fallo en una prueba de regresión</a>
+</li>
+<li>
+<a href="#topico-4">4. Versiona la receta y conserva la reversión</a>
+</li>
+<li>
+<a href="#topico-5">5. Concluye el proyecto: informe semanal</a>
+</li>
+<li>
+<a href="#topico-6">6. Revisa tu portafolio de skills</a>
+</li>
+</ol>
+<div aria-label="Progreso de lectura" aria-valuemax="100" aria-valuemin="0" aria-valuenow="0" class="meter" data-inema-meter="modulo:4-2" role="progressbar">
+<div class="meter-top">
+<span data-inema-meter-frac="">0 de 0</span>
+<span data-inema-meter-pct="">0%</span>
+</div>
+<div class="inema-bar">
+<div data-inema-meter-fill="">
+</div>
+</div>
+</div>
+<p class="muted">Selecciona un fragmento de las explicaciones para resaltarlo o tomar notas.</p>
+</aside>
+<article class="lesson-content" data-inema-module="4-2" data-inema-track="4">
+<section class="lesson" data-inema-topic="modulo-4-2#topico-1" id="topico-1">
+<div class="lesson-head">
+<span class="circle">1</span>
+<h2>Aumenta la autonomía según la evidencia</h2>
+</div>
+<figure class="diagram">
+<div aria-label="Diagrama con desplazamiento horizontal en pantallas pequeñas" class="diagram-scroll" role="region" tabindex="0">
+<svg aria-label="Acompañar → Revisar todo → Muestrear → Monitorear límites" class="w-full h-auto" role="img" viewbox="0 0 720 200">
+<defs>
+<pattern height="24" id="d4-2-1-grid" patternunits="userSpaceOnUse" width="24">
+<circle cx="2" cy="2" fill="#fbbf24" opacity=".13" r="1"></circle>
+</pattern>
+<filter id="d4-2-1-glow">
+<fegaussianblur result="b" stddeviation="1.8"></fegaussianblur>
+<femerge>
+<femergenode in="b"></femergenode>
+<femergenode in="SourceGraphic"></femergenode>
+</femerge>
+</filter>
+<marker id="d4-2-1-arrow" markerheight="7" markerwidth="7" orient="auto" refx="6" refy="3.5">
+<path d="M0 0 7 3.5 0 7" fill="#fbbf24"></path>
+</marker>
+</defs>
+<rect fill="#0f172a" height="200" width="720"></rect>
+<rect fill="url(#d4-2-1-grid)" height="200" width="720"></rect>
+<path d="M170 137 H182 V110 H192" fill="none" marker-end="url(#d4-2-1-arrow)" opacity=".6" stroke="#fbbf24" stroke-width="1.8"></path>
+<g>
+<rect fill="#111827" filter="url(#d4-2-1-glow)" height="62" rx="10" stroke="#fbbf24" stroke-width="2" width="150" x="20" y="105"></rect>
+<text fill="#e5e7eb" font-size="14" font-weight="600" text-anchor="middle" x="95.0" y="141.0">Seguir</text>
+</g>
+<path d="M345 110 H357 V83 H367" fill="none" marker-end="url(#d4-2-1-arrow)" opacity=".6" stroke="#fbbf24" stroke-width="1.8"></path>
+<g>
+<rect fill="#111827" height="62" rx="10" stroke="#38bdf8" stroke-width="2" width="150" x="195" y="78"></rect>
+<text fill="#e5e7eb" font-size="14" font-weight="600" text-anchor="middle" x="270.0" y="114.0">Revisar todo</text>
+</g>
+<path d="M520 83 H532 V56 H542" fill="none" marker-end="url(#d4-2-1-arrow)" opacity=".6" stroke="#fbbf24" stroke-width="1.8"></path>
+<g>
+<rect fill="#111827" height="62" rx="10" stroke="#38bdf8" stroke-width="2" width="150" x="370" y="51"></rect>
+<text fill="#e5e7eb" font-size="14" font-weight="600" text-anchor="middle" x="445.0" y="87.0">Mostrar</text>
+</g>
+<g>
+<rect fill="#111827" height="62" rx="10" stroke="#38bdf8" stroke-width="2" width="150" x="545" y="24"></rect>
+<text fill="#e5e7eb" font-size="14" font-weight="600" text-anchor="middle" x="620.0" y="60.0">Supervisar límites</text>
+</g>
+</svg>
+</div>
+<figcaption>La supervisión puede disminuir; los criterios y la capacidad de detenerse siguen.</figcaption>
+</figure>
+<div class="inema-prose">
+<h3>Qué es</h3>
+<p data-inema-block="m4-2-t1-p1" id="m4-2-t1-p1">El método de la bicicleta representa una supervisión que cambia a lo largo del aprendizaje. En las primeras ejecuciones, acompaña todo. Después de observar estabilidad, revisa muestras y mantén controles sobre acciones de mayor impacto.</p>
+<h3>Por qué aprender</h3>
+<p data-inema-block="m4-2-t1-p2" id="m4-2-t1-p2">Confiar más no significa retirar toda protección. Una skill que produce un borrador puede operar con poca supervisión; publicar, enviar o alterar registros implica consecuencias diferentes. El nivel de autonomía depende del riesgo y de las evidencias.</p>
+<h3>Conceptos clave</h3>
+</div>
+<div class="key-grid">
+<div class="key">
+<strong>Acompañamiento</strong>revisar paso a paso.</div>
+<div class="key">
+<strong>Revisión completa</strong>evaluar toda la salida.</div>
+<div class="key">
+<strong>Muestreo</strong>mirar una parte representativa.</div>
+<div class="key">
+<strong>Límites permanentes</strong>siguen incluso después de la madurez.</div>
+</div>
+<div class="code-box">
+<div class="code-head">
+<span>EJEMPLO CON COMENTARIOS · 4.2.1</span>
+<button data-copy="code-4-2-1">Copiar ejemplo</button>
+</div>
+<pre id="code-4-2-1">
+<code>Fase 1: acompañar tres casos diferentes.
+Fase 2: revisar cada entrega final.
+Fase 3: muestrear salidas de bajo impacto.
+Siempre: revisar bloqueos y cambios de comportamiento.</code>
+</pre>
+</div>
+<div class="comparison">
+<div class="compare-good">
+<h3>✓ Haz así</h3>
+<p>Aumenta la supervisión cuando la entrada o el entorno cambien.</p>
+</div>
+<div class="compare-bad">
+<h3>✗ Evita este error</h3>
+<p>Tratar algunas ejecuciones buenas como autorización ilimitada.</p>
+</div>
+</div>
+<aside class="tip">
+<strong>Llévalo a tu skill.</strong> La supervisión puede disminuir; los criterios y la capacidad de interrumpir se mantienen. Use este principio para revisar el ejemplo antes de avanzar.</aside>
+<div class="practice">
+<h3>Practica antes de revelar</h3>
+<p>Una skill estable empieza a usar una nueva herramienta de publicación. ¿Qué cambia?</p>
+<details>
+<summary>Ver respuesta comentada</summary>
+<p>La capacidad y el riesgo cambiaron. Reevalúa permisos, casos de prueba y supervisión. La estabilidad del borrador no prueba la seguridad de la publicación.</p>
+</details>
+</div>
+<div class="read-controls">
+<button aria-pressed="false" data-inema-read-toggle="">
+<span aria-hidden="true">✓</span>
+<span data-inema-read-label="">Marcar como leído</span>
+</button>
+<button aria-pressed="false" data-inema-doubt-toggle="">Tengo una duda</button>
+</div>
+</section>
+<section class="lesson" data-inema-topic="modulo-4-2#topico-2" id="topico-2">
+<div class="lesson-head">
+<span class="circle">2</span>
+<h2>Da retroalimentación que identifique la corrección más pequeña</h2>
+</div>
+<figure class="diagram">
+<div aria-label="Diagrama con desplazamiento horizontal en pantallas pequeñas" class="diagram-scroll" role="region" tabindex="0">
+<svg aria-label="Observado → Esperado → Corrección mínima → Prueba" class="w-full h-auto" role="img" viewbox="0 0 720 200">
+<defs>
+<pattern height="24" id="d4-2-2-grid" patternunits="userSpaceOnUse" width="24">
+<circle cx="2" cy="2" fill="#fbbf24" opacity=".13" r="1"></circle>
+</pattern>
+<filter id="d4-2-2-glow">
+<fegaussianblur result="b" stddeviation="1.8"></fegaussianblur>
+<femerge>
+<femergenode in="b"></femergenode>
+<femergenode in="SourceGraphic"></femergenode>
+</femerge>
+</filter>
+<marker id="d4-2-2-arrow" markerheight="7" markerwidth="7" orient="auto" refx="6" refy="3.5">
+<path d="M0 0 7 3.5 0 7" fill="#fbbf24"></path>
+</marker>
+</defs>
+<rect fill="#0f172a" height="200" width="720"></rect>
+<rect fill="url(#d4-2-2-grid)" height="200" width="720"></rect>
+<path d="M175 100 H193" fill="none" marker-end="url(#d4-2-2-arrow)" opacity=".6" stroke="#fbbf24" stroke-width="1.8"></path>
+<g>
+<rect fill="#111827" filter="url(#d4-2-2-glow)" height="74" rx="10" stroke="#fbbf24" stroke-width="2" width="150" x="20" y="63"></rect>
+<text fill="#e5e7eb" font-size="14" font-weight="600" text-anchor="middle" x="95.0" y="105.0">Observado</text>
+</g>
+<path d="M350 100 H368" fill="none" marker-end="url(#d4-2-2-arrow)" opacity=".6" stroke="#fbbf24" stroke-width="1.8"></path>
+<g>
+<rect fill="#111827" height="74" rx="10" stroke="#38bdf8" stroke-width="2" width="150" x="195" y="63"></rect>
+<text fill="#e5e7eb" font-size="14" font-weight="600" text-anchor="middle" x="270.0" y="105.0">Esperado</text>
+</g>
+<path d="M525 100 H543" fill="none" marker-end="url(#d4-2-2-arrow)" opacity=".6" stroke="#fbbf24" stroke-width="1.8"></path>
+<g>
+<rect fill="#111827" height="74" rx="10" stroke="#38bdf8" stroke-width="2" width="150" x="370" y="63"></rect>
+<text fill="#e5e7eb" font-size="14" font-weight="600" text-anchor="middle" x="445.0" y="105.0">Corrección mínima</text>
+</g>
+<g>
+<rect fill="#111827" height="74" rx="10" stroke="#38bdf8" stroke-width="2" width="150" x="545" y="63"></rect>
+<text fill="#e5e7eb" font-size="14" font-weight="600" text-anchor="middle" x="620.0" y="105.0">Prueba</text>
+</g>
+</svg>
+</div>
+<figcaption>La buena retroalimentación reduce la incertidumbre y preserva el trabajo ya validado.</figcaption>
+</figure>
+<div class="inema-prose">
+<h3>Qué es</h3>
+<p data-inema-block="m4-2-t2-p1" id="m4-2-t2-p1">Un feedback eficaz nombra el resultado observado, lo esperado, el impacto y la corrección propuesta. Incluye también lo que funcionó y debe preservarse. Esto reduce el riesgo de que una reescritura innecesaria rompa partes buenas.</p>
+<h3>Por qué aprender</h3>
+<p data-inema-block="m4-2-t2-p2" id="m4-2-t2-p2">“Quedó mal” empuja al agente a adivinar. “El total está correcto, pero falta el período en el encabezado” localiza el defecto. La corrección es agregar y probar el período, no cambiar todo el pipeline de cálculo.</p>
+<h3>Conceptos clave</h3>
+</div>
+<div class="key-grid">
+<div class="key">
+<strong>Observado</strong>lo que pasó.</div>
+<div class="key">
+<strong>Esperado</strong>contrato violado.</div>
+<div class="key">
+<strong>Impacto</strong>por qué importa.</div>
+<div class="key">
+<strong>Protección</strong>regla y pruebas mínimas.</div>
+</div>
+<div class="code-box">
+<div class="code-head">
+<span>EJEMPLO CON COMENTARIOS · 4.2.2</span>
+<button data-copy="code-4-2-2">Copiar ejemplo</button>
+</div>
+<pre id="code-4-2-2">
+<code>Funcionó: los totales por canal son correctos.
+Falló: el período no aparece antes del resumen.
+Impacto: el lector no sabe a qué semana se refiere.
+Ajuste: exigir período en el encabezado y verificar las dos fechas.</code>
+</pre>
+</div>
+<div class="timeline">
+<h3>Del concepto a la acción</h3>
+<ol>
+<li>Observado: identificar la condición inicial.</li>
+<li>Esperado: aplicar la decisión descrita.</li>
+<li>Corrección mínima: verificar el efecto en el ejemplo.</li>
+<li>Prueba: registrar la evidencia de salida.</li>
+</ol>
+</div>
+<div class="comparison">
+<div class="compare-good">
+<h3>✓ Haz así</h3>
+<p>Cita el archivo, la sección o un ejemplo concreto.</p>
+</div>
+<div class="compare-bad">
+<h3>✗ Evita este error</h3>
+<p>Pide “vuelve a hacerlo todo mejor” cuando haya un defecto localizado.</p>
+</div>
+</div>
+<div class="practice">
+<h3>Practica antes de revelar</h3>
+<p>Convierte “el texto no suena como yo” en una retroalimentación utilizable.</p>
+<details>
+<summary>Ver respuesta comentada</summary>
+<p>“Usaste frases largas y tres superlativos que no aparecen en mis ejemplos. Conserva los hechos, acorta esas frases y usa los dos textos aprobados como referencia de tono.”</p>
+</details>
+</div>
+<div class="read-controls">
+<button aria-pressed="false" data-inema-read-toggle="">
+<span aria-hidden="true">✓</span>
+<span data-inema-read-label="">Marcar como leído</span>
+</button>
+<button aria-pressed="false" data-inema-doubt-toggle="">Tengo una duda</button>
+</div>
+</section>
+<section class="lesson" data-inema-topic="modulo-4-2#topico-3" id="topico-3">
+<div class="lesson-head">
+<span class="circle">3</span>
+<h2>Convierte el fallo en una prueba de regresión</h2>
+</div>
+<figure class="diagram">
+<div aria-label="Diagrama con desplazamiento horizontal en pantallas pequeñas" class="diagram-scroll" role="region" tabindex="0">
+<svg aria-label="Fallo real → Caso mínimo → Corrección → Suite completa" class="w-full h-auto" role="img" viewbox="0 0 720 200">
+<defs>
+<pattern height="24" id="d4-2-3-grid" patternunits="userSpaceOnUse" width="24">
+<circle cx="2" cy="2" fill="#fbbf24" opacity=".13" r="1"></circle>
+</pattern>
+<filter id="d4-2-3-glow">
+<fegaussianblur result="b" stddeviation="1.8"></fegaussianblur>
+<femerge>
+<femergenode in="b"></femergenode>
+<femergenode in="SourceGraphic"></femergenode>
+</femerge>
+</filter>
+<marker id="d4-2-3-arrow" markerheight="7" markerwidth="7" orient="auto" refx="6" refy="3.5">
+<path d="M0 0 7 3.5 0 7" fill="#fbbf24"></path>
+</marker>
+</defs>
+<rect fill="#0f172a" height="200" width="720"></rect>
+<rect fill="url(#d4-2-3-grid)" height="200" width="720"></rect>
+<path d="M280 54 H414" fill="none" marker-end="url(#d4-2-3-arrow)" opacity=".6" stroke="#fbbf24" stroke-width="1.8"></path>
+<path d="M540 87 V110" fill="none" marker-end="url(#d4-2-3-arrow)" opacity=".6" stroke="#fbbf24" stroke-width="1.8"></path>
+<path d="M420 148 H287" fill="none" marker-end="url(#d4-2-3-arrow)" opacity=".6" stroke="#fbbf24" stroke-width="1.8"></path>
+<path d="M160 116 V92" fill="none" marker-end="url(#d4-2-3-arrow)" opacity=".6" stroke="#fbbf24" stroke-width="1.8"></path>
+<g>
+<rect fill="#111827" filter="url(#d4-2-3-glow)" height="64" rx="10" stroke="#fbbf24" stroke-width="2" width="240" x="40" y="22"></rect>
+<text fill="#e5e7eb" font-size="14" font-weight="600" text-anchor="middle" x="160.0" y="59.0">Fallo real</text>
+</g>
+<g>
+<rect fill="#111827" height="64" rx="10" stroke="#38bdf8" stroke-width="2" width="240" x="420" y="22"></rect>
+<text fill="#e5e7eb" font-size="14" font-weight="600" text-anchor="middle" x="540.0" y="59.0">Caso mínimo</text>
+</g>
+<g>
+<rect fill="#111827" height="64" rx="10" stroke="#38bdf8" stroke-width="2" width="240" x="420" y="116"></rect>
+<text fill="#e5e7eb" font-size="14" font-weight="600" text-anchor="middle" x="540.0" y="153.0">Corrección</text>
+</g>
+<g>
+<rect fill="#111827" height="64" rx="10" stroke="#38bdf8" stroke-width="2" width="240" x="40" y="116"></rect>
+<text fill="#e5e7eb" font-size="14" font-weight="600" text-anchor="middle" x="160.0" y="153.0">Suite completa</text>
+</g>
+</svg>
+</div>
+<figcaption>Una mejora solo se demuestra cuando el problema desaparece y el resto relevante sigue pasando.</figcaption>
+</figure>
+<div class="inema-prose">
+<h3>Qué es</h3>
+<p data-inema-block="m4-2-t3-p1" id="m4-2-t3-p1">Después de corregir, guarda un caso que habría detectado la falla antes. Esa prueba entra en la próxima evaluación. También ejecuta los casos anteriores para asegurar que la nueva protección no dejó inutilizables entradas válidas.</p>
+<h3>Por qué aprender</h3>
+<p data-inema-block="m4-2-t3-p2" id="m4-2-t3-p2">La corrección de una ejecución es local; la prueba preserva el aprendizaje. Si una regla de privacidad empieza a ocultar todos los números, por ejemplo, la regresión debe revelar que también eliminó datos esenciales que eran públicos.</p>
+<h3>Conceptos clave</h3>
+</div>
+<div class="key-grid">
+<div class="key">
+<strong>Caso mínimo</strong>reproduce el problema.</div>
+<div class="key">
+<strong>Prueba nueva</strong>descarta el fallo antiguo.</div>
+<div class="key">
+<strong>Suite anterior</strong>protege lo que funcionaba.</div>
+<div class="key">
+<strong>Resultado final</strong>incluye ambas verificaciones.</div>
+</div>
+<div class="code-box">
+<div class="code-head">
+<span>EJEMPLO CON COMENTARIOS · 4.2.3</span>
+<button data-copy="code-4-2-3">Copiar ejemplo</button>
+</div>
+<pre id="code-4-2-3">
+<code>Fallo: informe sin período.
+Caso: CSV con fechas diferentes.
+Prueba: el encabezado contiene la fecha mínima y la máxima.
+Regresión: el total y los canales siguen siendo correctos.</code>
+</pre>
+</div>
+<div class="comparison">
+<div class="compare-good">
+<h3>✓ Haz así</h3>
+<p>Mira que la prueba falle antes de confiar en que protege el caso.</p>
+</div>
+<div class="compare-bad">
+<h3>✗ Evita este error</h3>
+<p>Acumular reglas que nunca se ejercitan.</p>
+</div>
+</div>
+<div class="practice">
+<h3>Practica antes de revelar</h3>
+<p>La entrada vacía ahora da un error claro, pero la válida dejó de funcionar. ¿La corrección terminó?</p>
+<details>
+<summary>Ver respuesta comentada</summary>
+<p>No. Corrigiste un caso e introdujiste una regresión. Ajusta la condición y repite ambos tests.</p>
+</details>
+</div>
+<div class="read-controls">
+<button aria-pressed="false" data-inema-read-toggle="">
+<span aria-hidden="true">✓</span>
+<span data-inema-read-label="">Marcar como leído</span>
+</button>
+<button aria-pressed="false" data-inema-doubt-toggle="">Tengo una duda</button>
+</div>
+</section>
+<section class="lesson" data-inema-topic="modulo-4-2#topico-4" id="topico-4">
+<div class="lesson-head">
+<span class="circle">4</span>
+<h2>Versiona la receta y preserva la reversión</h2>
+</div>
+<figure class="diagram">
+<div aria-label="Diagrama con desplazamiento horizontal en pantallas pequeñas" class="diagram-scroll" role="region" tabindex="0">
+<svg aria-label="Versión actual → Cambio pequeño → Pruebas → Nueva versión o reversión" class="w-full h-auto" role="img" viewbox="0 0 720 200">
+<defs>
+<pattern height="24" id="d4-2-4-grid" patternunits="userSpaceOnUse" width="24">
+<circle cx="2" cy="2" fill="#fbbf24" opacity=".13" r="1"></circle>
+</pattern>
+<filter id="d4-2-4-glow">
+<fegaussianblur result="b" stddeviation="1.8"></fegaussianblur>
+<femerge>
+<femergenode in="b"></femergenode>
+<femergenode in="SourceGraphic"></femergenode>
+</femerge>
+</filter>
+<marker id="d4-2-4-arrow" markerheight="7" markerwidth="7" orient="auto" refx="6" refy="3.5">
+<path d="M0 0 7 3.5 0 7" fill="#fbbf24"></path>
+</marker>
+</defs>
+<rect fill="#0f172a" height="200" width="720"></rect>
+<rect fill="url(#d4-2-4-grid)" height="200" width="720"></rect>
+<path d="M170 137 H182 V110 H192" fill="none" marker-end="url(#d4-2-4-arrow)" opacity=".6" stroke="#fbbf24" stroke-width="1.8"></path>
+<g>
+<rect fill="#111827" filter="url(#d4-2-4-glow)" height="62" rx="10" stroke="#fbbf24" stroke-width="2" width="150" x="20" y="105"></rect>
+<text fill="#e5e7eb" font-size="14" font-weight="600" text-anchor="middle" x="95.0" y="141.0">Versión actual</text>
+</g>
+<path d="M345 110 H357 V83 H367" fill="none" marker-end="url(#d4-2-4-arrow)" opacity=".6" stroke="#fbbf24" stroke-width="1.8"></path>
+<g>
+<rect fill="#111827" height="62" rx="10" stroke="#38bdf8" stroke-width="2" width="150" x="195" y="78"></rect>
+<text fill="#e5e7eb" font-size="14" font-weight="600" text-anchor="middle" x="270.0" y="114.0">Cambio pequeño</text>
+</g>
+<path d="M520 83 H532 V56 H542" fill="none" marker-end="url(#d4-2-4-arrow)" opacity=".6" stroke="#fbbf24" stroke-width="1.8"></path>
+<g>
+<rect fill="#111827" height="62" rx="10" stroke="#38bdf8" stroke-width="2" width="150" x="370" y="51"></rect>
+<text fill="#e5e7eb" font-size="14" font-weight="600" text-anchor="middle" x="445.0" y="87.0">Tests</text>
+</g>
+<g>
+<rect fill="#111827" height="62" rx="10" stroke="#38bdf8" stroke-width="2" width="150" x="545" y="24"></rect>
+<text fill="#e5e7eb" font-size="14" font-weight="600" text-anchor="middle" x="620.0" y="51.0">Nueva versión o</text>
+<text fill="#e5e7eb" font-size="14" font-weight="600" text-anchor="middle" x="620.0" y="70.0">reversión</text>
+</g>
+</svg>
+</div>
+<figcaption>El versionado transforma los intentos en una historia recuperable.</figcaption>
+</figure>
+<div class="inema-prose">
+<h3>Qué es</h3>
+<p data-inema-block="m4-2-t4-p1" id="m4-2-t4-p1">Guarda cambios de la skill en control de versiones o en copias identificadas, con un historial breve del motivo. Registra la versión usada en cada experimento para distinguir mejora de instrucción de cambio de ambiente.</p>
+<h3>Por qué aprender</h3>
+<p data-inema-block="m4-2-t4-p2" id="m4-2-t4-p2">Un historial útil permite volver a la versión anterior cuando una corrección empeora el resultado. No basta con guardar “final”, “final2” y “ahora-va”. Identifica qué cambió y la evidencia que justificó la decisión.</p>
+<h3>Conceptos clave</h3>
+</div>
+<div class="key-grid">
+<div class="key">
+<strong>Versión</strong>estado identificable.</div>
+<div class="key">
+<strong>Changelog</strong>motivo del cambio.</div>
+<div class="key">
+<strong>Diff</strong>cambio concreto.</div>
+<div class="key">
+<strong>Rollback</strong>retorno a un estado conocido.</div>
+</div>
+<div class="code-box">
+<div class="code-head">
+<span>EJEMPLO COMENTADO · 4.2.4</span>
+<button data-copy="code-4-2-4">Copiar ejemplo</button>
+</div>
+<pre id="code-4-2-4">
+<code>Versión del proyecto: 1.0.0
+Patch de corrección: 1.0.1
+Nueva funcionalidad: 1.1.1
+Convención de este proyecto: minor conserva el patch.
+Registrar siempre el motivo y las pruebas en el historial.</code>
+</pre>
+</div>
+<div class="comparison">
+<div class="compare-good">
+<h3>✓ Haz así</h3>
+<p>Usa la convención de versionado documentada por el proyecto.</p>
+</div>
+<div class="compare-bad">
+<h3>✗ Evita este error</h3>
+<p>Confundir una convención local con la regla universal de semver.</p>
+</div>
+</div>
+<aside class="tip">
+<strong>Llévalo a tu skill.</strong> El versionado convierte los intentos en una historia recuperable. Use este principio para revisar el ejemplo antes de avanzar.</aside>
+<div class="practice">
+<h3>Practica antes de revelar</h3>
+<p>¿Qué información debe acompañar “ajusté la descripción”?</p>
+<details>
+<summary>Ver respuesta comentada</summary>
+<p>El disparador que fallaba, el texto alterado y los pedidos positivos y negativos revaluados. Así alguien puede entender por qué existe el cambio.</p>
+</details>
+</div>
+<div class="read-controls">
+<button aria-pressed="false" data-inema-read-toggle="">
+<span aria-hidden="true">✓</span>
+<span data-inema-read-label="">Marcar como leído</span>
+</button>
+<button aria-pressed="false" data-inema-doubt-toggle="">Tengo una duda</button>
+</div>
+</section>
+<section class="lesson" data-inema-topic="modulo-4-2#topico-5" id="topico-5">
+<div class="lesson-head">
+<span class="circle">5</span>
+<h2>Concluye el proyecto: informe semanal</h2>
+</div>
+<figure class="diagram">
+<div aria-label="Diagrama con desplazamiento horizontal en pantallas pequeñas" class="diagram-scroll" role="region" tabindex="0">
+<svg aria-label="Instalar el ejemplo → Generar informe → Probar fallos → Entregar evidencias" class="w-full h-auto" role="img" viewbox="0 0 720 200">
+<defs>
+<pattern height="24" id="d4-2-5-grid" patternunits="userSpaceOnUse" width="24">
+<circle cx="2" cy="2" fill="#fbbf24" opacity=".13" r="1"></circle>
+</pattern>
+<filter id="d4-2-5-glow">
+<fegaussianblur result="b" stddeviation="1.8"></fegaussianblur>
+<femerge>
+<femergenode in="b"></femergenode>
+<femergenode in="SourceGraphic"></femergenode>
+</femerge>
+</filter>
+<marker id="d4-2-5-arrow" markerheight="7" markerwidth="7" orient="auto" refx="6" refy="3.5">
+<path d="M0 0 7 3.5 0 7" fill="#fbbf24"></path>
+</marker>
+</defs>
+<rect fill="#0f172a" height="200" width="720"></rect>
+<rect fill="url(#d4-2-5-grid)" height="200" width="720"></rect>
+<path d="M175 100 H193" fill="none" marker-end="url(#d4-2-5-arrow)" opacity=".6" stroke="#fbbf24" stroke-width="1.8"></path>
+<g>
+<rect fill="#111827" filter="url(#d4-2-5-glow)" height="74" rx="10" stroke="#fbbf24" stroke-width="2" width="150" x="20" y="63"></rect>
+<text fill="#e5e7eb" font-size="14" font-weight="600" text-anchor="middle" x="95.0" y="105.0">Instalar el ejemplo</text>
+</g>
+<path d="M350 100 H368" fill="none" marker-end="url(#d4-2-5-arrow)" opacity=".6" stroke="#fbbf24" stroke-width="1.8"></path>
+<g>
+<rect fill="#111827" height="74" rx="10" stroke="#38bdf8" stroke-width="2" width="150" x="195" y="63"></rect>
+<text fill="#e5e7eb" font-size="14" font-weight="600" text-anchor="middle" x="270.0" y="105.0">Generar informe</text>
+</g>
+<path d="M525 100 H543" fill="none" marker-end="url(#d4-2-5-arrow)" opacity=".6" stroke="#fbbf24" stroke-width="1.8"></path>
+<g>
+<rect fill="#111827" height="74" rx="10" stroke="#38bdf8" stroke-width="2" width="150" x="370" y="63"></rect>
+<text fill="#e5e7eb" font-size="14" font-weight="600" text-anchor="middle" x="445.0" y="105.0">Probar fallas</text>
+</g>
+<g>
+<rect fill="#111827" height="74" rx="10" stroke="#38bdf8" stroke-width="2" width="150" x="545" y="63"></rect>
+<text fill="#e5e7eb" font-size="14" font-weight="600" text-anchor="middle" x="620.0" y="105.0">Entregar evidencias</text>
+</g>
+</svg>
+</div>
+<figcaption>El proyecto termina en archivos verificables, no en una promesa de automatización.</figcaption>
+</figure>
+<div class="inema-prose">
+<h3>Qué es</h3>
+<p data-inema-block="m4-2-t5-p1" id="m4-2-t5-p1">Reúne la skill, el CSV sintético, el generador, casos negativos y la evidencia de ejecución. El kit proporciona un punto de partida funcional; tu tarea es ejecutar, explicar el resultado y adaptar una regla pequeña con una prueba correspondiente.</p>
+<h3>Por qué aprender</h3>
+<p data-inema-block="m4-2-t5-p2" id="m4-2-t5-p2">El proyecto final comprueba el ciclo completo: contrato, implementación, verificación y mejora. Leer el SKILL.md es solo una parte. Necesitas abrir los artefactos, revisar la cuenta y observar cómo reacciona la skill ante una entrada inválida.</p>
+<h3>Conceptos clave</h3>
+</div>
+<div class="key-grid">
+<div class="key">
+<strong>Entrega 1</strong>SKILL.md delimitada.</div>
+<div class="key">
+<strong>Entrega 2</strong>informe y datos calculados.</div>
+<div class="key">
+<strong>Entrega 3</strong>evidencias de tests.</div>
+<div class="key">
+<strong>Entrega 4</strong>cambio justificado y regresión.</div>
+</div>
+<div class="code-box">
+<div class="code-head">
+<span>EJEMPLO COMENTADO · 4.2.5</span>
+<button data-copy="code-4-2-5">Copiar ejemplo</button>
+</div>
+<pre id="code-4-2-5">
+<code>python3 scripts/gerar_relatorio.py dados/vendas.csv \
+  --outdir saidas/rodada-01
+python3 scripts/testar_relatorio.py
+# Después, pedir al Codex que ejecute por la skill
+# y compararlo con el resultado del script.</code>
+</pre>
+</div>
+<div class="timeline">
+<h3>Del concepto a la acción</h3>
+<ol>
+<li>Instalar el ejemplo: identificar la condición inicial.</li>
+<li>Generar informe: aplicar la decisión descrita.</li>
+<li>Probar fallas: comprobar el efecto en el ejemplo.</li>
+<li>Entregar evidencias: registrar la evidencia de salida.</li>
+</ol>
+</div>
+<div class="comparison">
+<div class="compare-good">
+<h3>✓ Haz así</h3>
+<p>Compara la ejecución directa con la ejecución guiada por la skill.</p>
+</div>
+<div class="compare-bad">
+<h3>✗ Evita este error</h3>
+<p>Afirmar que el disparador de Codex se probó solo porque pasó el Python.</p>
+</div>
+</div>
+<div class="practice">
+<h3>Practica antes de revelar</h3>
+<p>Agrega un límite de valor por línea, documenta ese límite y crea un caso que lo exceda.</p>
+<details>
+<summary>Ver respuesta comentada</summary>
+<p>Una solución aceptable define el límite, rechaza el valor excedente con un mensaje claro y mantiene el caso de R$ 500 aprobado. Ese límite es una elección del ejercicio, no una regla comercial universal.</p>
+</details>
+</div>
+<div class="read-controls">
+<button aria-pressed="false" data-inema-read-toggle="">
+<span aria-hidden="true">✓</span>
+<span data-inema-read-label="">Marcar como leído</span>
+</button>
+<button aria-pressed="false" data-inema-doubt-toggle="">Tengo una duda</button>
+</div>
+</section>
+<section class="lesson" data-inema-topic="modulo-4-2#topico-6" id="topico-6">
+<div class="lesson-head">
+<span class="circle">6</span>
+<h2>Revisa tu portafolio de skills</h2>
+</div>
+<figure class="diagram">
+<div aria-label="Diagrama con desplazamiento horizontal en pantallas pequeñas" class="diagram-scroll" role="region" tabindex="0">
+<svg aria-label="Inventariar → Probar fronteras → Corregir lo necesario → Re-evaluar" class="w-full h-auto" role="img" viewbox="0 0 720 200">
+<defs>
+<pattern height="24" id="d4-2-6-grid" patternunits="userSpaceOnUse" width="24">
+<circle cx="2" cy="2" fill="#fbbf24" opacity=".13" r="1"></circle>
+</pattern>
+<filter id="d4-2-6-glow">
+<fegaussianblur result="b" stddeviation="1.8"></fegaussianblur>
+<femerge>
+<femergenode in="b"></femergenode>
+<femergenode in="SourceGraphic"></femergenode>
+</femerge>
+</filter>
+<marker id="d4-2-6-arrow" markerheight="7" markerwidth="7" orient="auto" refx="6" refy="3.5">
+<path d="M0 0 7 3.5 0 7" fill="#fbbf24"></path>
+</marker>
+</defs>
+<rect fill="#0f172a" height="200" width="720"></rect>
+<rect fill="url(#d4-2-6-grid)" height="200" width="720"></rect>
+<path d="M280 54 H414" fill="none" marker-end="url(#d4-2-6-arrow)" opacity=".6" stroke="#fbbf24" stroke-width="1.8"></path>
+<path d="M540 87 V110" fill="none" marker-end="url(#d4-2-6-arrow)" opacity=".6" stroke="#fbbf24" stroke-width="1.8"></path>
+<path d="M420 148 H287" fill="none" marker-end="url(#d4-2-6-arrow)" opacity=".6" stroke="#fbbf24" stroke-width="1.8"></path>
+<path d="M160 116 V92" fill="none" marker-end="url(#d4-2-6-arrow)" opacity=".6" stroke="#fbbf24" stroke-width="1.8"></path>
+<g>
+<rect fill="#111827" filter="url(#d4-2-6-glow)" height="64" rx="10" stroke="#fbbf24" stroke-width="2" width="240" x="40" y="22"></rect>
+<text fill="#e5e7eb" font-size="14" font-weight="600" text-anchor="middle" x="160.0" y="59.0">Inventariar</text>
+</g>
+<g>
+<rect fill="#111827" height="64" rx="10" stroke="#38bdf8" stroke-width="2" width="240" x="420" y="22"></rect>
+<text fill="#e5e7eb" font-size="14" font-weight="600" text-anchor="middle" x="540.0" y="59.0">Probar los límites</text>
+</g>
+<g>
+<rect fill="#111827" height="64" rx="10" stroke="#38bdf8" stroke-width="2" width="240" x="420" y="116"></rect>
+<text fill="#e5e7eb" font-size="14" font-weight="600" text-anchor="middle" x="540.0" y="144.0">Corregir el</text>
+<text fill="#e5e7eb" font-size="14" font-weight="600" text-anchor="middle" x="540.0" y="163.0">necesario</text>
+</g>
+<g>
+<rect fill="#111827" height="64" rx="10" stroke="#38bdf8" stroke-width="2" width="240" x="40" y="116"></rect>
+<text fill="#e5e7eb" font-size="14" font-weight="600" text-anchor="middle" x="160.0" y="153.0">Reevaluar</text>
+</g>
+</svg>
+</div>
+<figcaption>El mantenimiento cierra los seis pasos y prepara el próximo ciclo de mejora.</figcaption>
+</figure>
+<div class="inema-prose">
+<h3>Qué es</h3>
+<p data-inema-block="m4-2-t6-p1" id="m4-2-t6-p1">Una biblioteca saludable contiene tareas con fronteras claras, ejemplos y mantenimiento posible. Revisa skills parecidas, disparadores que compiten y reglas obsoletas. Consolida duplicaciones cuando haya evidencia de que representan el mismo proceso.</p>
+<h3>Por qué aprender</h3>
+<p data-inema-block="m4-2-t6-p2" id="m4-2-t6-p2">La habilidad final no es escribir más instrucciones: es mantener un sistema en el que cada procedimiento pueda encontrarse, ejecutarse y evaluarse. Rehaz la revisión cuando el trabajo cambie, no solo cuando el texto parezca antiguo.</p>
+<h3>Conceptos clave</h3>
+</div>
+<div class="key-grid">
+<div class="key">
+<strong>Inventario</strong>qué existe y para qué.</div>
+<div class="key">
+<strong>Conflicto</strong>dos skills compiten por la misma tarea.</div>
+<div class="key">
+<strong>Mantenimiento</strong>responsable y motivo de la actualización.</div>
+<div class="key">
+<strong>Evidencia</strong>casos y resultados recientes.</div>
+</div>
+<div class="code-box">
+<div class="code-head">
+<span>EJEMPLO COMENTADO · 4.2.6</span>
+<button data-copy="code-4-2-6">Copiar ejemplo</button>
+</div>
+<pre id="code-4-2-6">
+<code>Revisión final
+[ ] Salida aprobada y contratos claros
+[ ] Un trabajo y disparadores probados
+[ ] Libertad calibrada por etapa
+[ ] QA con evidencias
+[ ] Configuración evaluada
+[ ] El feedback se volvió prueba</code>
+</pre>
+</div>
+<div class="comparison">
+<div class="compare-good">
+<h3>✓ Haz así</h3>
+<p>Prioriza la skill que causa más retrabajo observable.</p>
+</div>
+<div class="compare-bad">
+<h3>✗ Evita este error</h3>
+<p>Aumenta las instrucciones para cada incidente sin eliminar contradicciones.</p>
+</div>
+</div>
+<div class="practice">
+<h3>Practica antes de revelar</h3>
+<p>Explica tu skill a otra persona en 60 segundos: entrada, salida, límite y evidencia.</p>
+<details>
+<summary>Ver respuesta comentada</summary>
+<p>Si la persona puede ubicar la carpeta, ejecutar el ejemplo, reconocer una falla y revisar el QA, el paquete es enseñable. El siguiente paso es probarlo con nuevas entradas reales debidamente preparadas.</p>
+</details>
+</div>
+<div class="read-controls">
+<button aria-pressed="false" data-inema-read-toggle="">
+<span aria-hidden="true">✓</span>
+<span data-inema-read-label="">Marcar como leído</span>
+</button>
+<button aria-pressed="false" data-inema-doubt-toggle="">Tengo una duda</button>
+</div>
+</section>
+<section class="quiz" data-inema-check="q-4-2">
+<span class="eyebrow">VERIFICACIÓN SIN BLOQUEO</span>
+<h2>Verifique su comprensión</h2>
+<p>¿Qué cambio cierra el ciclo de aprendizaje?</p>
+<div class="quiz-options">
+<button data-inema-check-option="0">Corregir el informe manualmente y cerrar.</button>
+<button data-inema-check-option="1">Agregar “tenga cuidado” al prompt.</button>
+<button data-inema-check-option="2">Corregir la regla específica y crear una prueba de regresión.</button>
+</div>
+<div aria-live="polite" data-inema-check-feedback="" role="status">
+</div>
+</section>
+<section class="module-summary">
+<h2>¿Qué te llevas de este módulo?</h2>
+<p>Entregar una skill, casos de prueba, QA e historial de mejora.</p>
+<ul>
+<li>Aumente la autonomía según la evidencia.</li>
+<li>Dar feedback que identifique la corrección más pequeña.</li>
+<li>Transformar el fallo en una prueba de regresión.</li>
+<li>Versionar la receta y conservar la reversión.</li>
+<li>Concluir el proyecto: informe semanal.</li>
+<li>Revise su portafolio de skills.</li>
+</ul>
+<p>Próxima acción: guarde el ejercicio en su laboratorio y registre lo que todavía necesita revisión.</p>
+</section>
+<div class="actions">
+<a class="btn" href="index.html">← Mapa del itinerario</a>
+<a class="btn cta" href="../../index.html#materiais">Concluir el proyecto con el kit →</a>
+</div>
+</article>
+</div>
+<p class="muted">Referencia de este módulo: transcripción proporcionada y <a href="../../index.html#fontes">fuentes y notas técnicas del curso</a>.</p>
+</main>
+<footer>
+<div class="wrap">Agent Skills · INEMA.CLUB · v1.1.0 · Curso en portugués<br/>Material educativo original basado en la referencia indicada. Progreso guardado en este navegador; exporte una copia en Mi recorrido.<br/>
+<a href="../../index.html#fontes">Referencias y criterios editoriales</a> · <a download="" href="../../materiais/kit-agent-skills.zip">Descargar kit de práctica</a>
+</div>
+</footer>
+<dialog aria-label="Lectura del módulo" id="module-modal">
+<button data-close-modal="">Cerrar módulo</button>
+<iframe title="Contenido completo del módulo">
+</iframe>
+</dialog>
+<script id="quiz-data" type="application/json">{"id": "q-4-2", "q": "¿Qué cambio cierra el ciclo de aprendizaje?", "options": ["Corregir el informe manualmente y cerrar.", "Agregar “tenga cuidado” al prompt.", "Corregir la regla específica y crear una prueba de regresión."], "answer": "2", "explain": {"0": "La corrección persistente cambia el proceso y demuestra que el defecto no volvió en los casos evaluados.", "1": "La corrección persistente cambia el proceso y demuestra que el defecto no volvió en los casos evaluados.", "2": "La corrección persistente cambia el proceso y demuestra que el defecto no volvió en los casos evaluados."}}</script>
+<script src="../../assets/learn.js">
+</script>
+<script src="../../assets/course.js">
+</script>
+<nav aria-label="Idioma del curso" data-course-languages=""><a href="../../../curso/trilha4/modulo-4-2.html" hreflang="pt-BR" lang="pt-BR">Português</a><a href="../../../en/curso/trilha4/modulo-4-2.html" hreflang="en" lang="en">English</a><a aria-current="page" href="modulo-4-2.html" hreflang="es" lang="es">Español</a></nav><script data-course-language-hash="">document.querySelectorAll('[data-course-languages] a').forEach(function(a){a.addEventListener('click',function(){a.href=a.getAttribute('href').split('#')[0]+location.hash;});});</script></body>
+</html>

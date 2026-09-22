@@ -1,0 +1,20 @@
+{
+  "entrada": "materiais/laboratorio/dados/vendas.csv",
+  "metodo": "Checagens internas do gerador; conferir o caso de referência com testar_relatorio.py.",
+  "checks": [
+    {
+      "criterio": "canais reconciliam com total",
+      "passou": true,
+      "obtido": "500.00"
+    },
+    {
+      "criterio": "período e registros presentes",
+      "passou": true
+    }
+  ],
+  "limites": [
+    "Não confirma completude da fonte.",
+    "Não comprova acionamento da skill pelo Codex.",
+    "Não realiza revisão editorial por agente."
+  ]
+}

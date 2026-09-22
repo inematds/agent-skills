@@ -1,0 +1,958 @@
+<!DOCTYPE html>
+<html class="dark" lang="en">
+<head>
+<script>
+(function () {
+  try {
+    var html = document.documentElement;
+    var DEF = { theme: 'inema-dark', font: 'inter', fontScale: 100, lineWidth: 68, leading: 1.7, accent: 'emerald' };
+    function clone(o) { var r = {}; for (var x in o) r[x] = o[x]; return r; }
+    var p = clone(DEF);
+    try {
+      var raw = localStorage.getItem('inema.prefs');
+      if (raw) {
+        var parsed = JSON.parse(raw);
+        if (parsed && typeof parsed === 'object') {
+          for (var k in DEF) if (parsed[k] != null) p[k] = parsed[k];
+        }
+      } else {
+        // fallback ao tema legado do v1
+        var legacy = localStorage.getItem('theme');
+        if (legacy === 'light') p.theme = 'claro';
+        else if (legacy === 'dark') p.theme = 'inema-dark';
+      }
+    } catch (e) { p = clone(DEF); }
+
+    // mapa tema -> (.dark on/off, data-theme, color-scheme)
+    var THEMES = {
+      'inema-dark': { dark: true,  attr: null,        cs: 'dark'  },
+      'claro':      { dark: false, attr: null,        cs: 'light' },
+      'sepia':      { dark: false, attr: 'sepia',     cs: 'light' },
+      'foco':       { dark: null,  attr: 'foco',      cs: null    },  // herda eixo atual
+      'contraste':  { dark: true,  attr: 'contraste', cs: 'dark'  }
+    };
+    var t = THEMES[p.theme] || THEMES['inema-dark'];
+
+    if (t.dark === true) html.classList.add('dark');
+    else if (t.dark === false) html.classList.remove('dark');
+    // 'foco' (null) preserva o que ja houver no atributo class do <html>
+
+    if (t.attr) html.setAttribute('data-theme', t.attr);
+    else html.removeAttribute('data-theme');
+
+    html.style.colorScheme = (t.cs ? t.cs : (html.classList.contains('dark') ? 'dark' : 'light'));
+
+    html.setAttribute('data-font', p.font || 'inter');
+    html.setAttribute('data-accent', p.accent || 'emerald');
+
+    // variaveis de leitura (espelham learn.js / learn.css) ANTES do paint
+    var s = html.style;
+    var scale = (+p.fontScale || 100);
+    s.setProperty('--inema-font-scale', (scale / 100).toString());
+    s.setProperty('font-size', scale + '%');               // :root em %, nunca px
+    s.setProperty('--measure', (+p.lineWidth || 68) + 'ch');
+    s.setProperty('--lh-body', (+p.leading || 1.7).toString());
+    var fam = p.font === 'system'
+      ? 'system-ui, -apple-system, "Segoe UI", Roboto, sans-serif'
+      : (p.font === 'leitura'
+        ? '"Atkinson Hyperlegible", "Inter", system-ui, sans-serif'
+        : '"Inter", system-ui, sans-serif');
+    s.setProperty('--font-body', fam);
+
+    var ACC = {
+      emerald: [152, 76, 45], blue: [217, 91, 60], purple: [258, 90, 66],
+      amber: [38, 92, 50], teal: [174, 72, 41], rose: [350, 89, 60]
+    };
+    var a = ACC[p.accent] || ACC.emerald;
+    s.setProperty('--accent-h', a[0] + '');
+    s.setProperty('--accent-s', a[1] + '%');
+    s.setProperty('--accent-l', a[2] + '%');
+    s.setProperty('--accent', 'hsl(' + a[0] + ' ' + a[1] + '% ' + a[2] + '%)');
+  } catch (err) {
+    // qualquer falha => default dark, preserva a marca
+    try { document.documentElement.classList.add('dark'); document.documentElement.style.colorScheme = 'dark'; } catch (e) {}
+  }
+})();
+</script>
+<meta charset="utf-8"/>
+<meta content="width=device-width, initial-scale=1" name="viewport"/>
+<title>Compare quality, cost, and effort | Agent Skills · INEMA</title>
+<meta content="Full Codex skills course: reverse engineering, triggers, freedom, verification, cost, and continuous improvement. INEMA v2 format." name="description"/>
+<meta content="agent-skills-codex-en" name="inema-course"/>
+<meta content="../../" name="course-root"/>
+<script data-inema-manifest="" type="application/json">{"course": "agent-skills-codex-en", "tracks": [{"n": "1", "title": "Foundations", "modules": [{"id": "1-1", "title": "Understand what a skill teaches", "topics": 6, "href": "curso/trilha1/modulo-1-1.html"}, {"id": "1-2", "title": "Start with the approved result", "topics": 6, "href": "curso/trilha1/modulo-1-2.html"}]}, {"n": "2", "title": "Construction", "modules": [{"id": "2-1", "title": "Build a skill with a clear job", "topics": 6, "href": "curso/trilha2/modulo-2-1.html"}, {"id": "2-2", "title": "Calibrate the agent’s freedom", "topics": 6, "href": "curso/trilha2/modulo-2-2.html"}]}, {"n": "3", "title": "Verification", "modules": [{"id": "3-1", "title": "Verify with evidence", "topics": 6, "href": "curso/trilha3/modulo-3-1.html"}, {"id": "3-2", "title": "Do a real visual review", "topics": 6, "href": "curso/trilha3/modulo-3-2.html"}]}, {"n": "4", "title": "Evolution", "modules": [{"id": "4-1", "title": "Compare quality, cost, and effort", "topics": 6, "href": "curso/trilha4/modulo-4-1.html"}, {"id": "4-2", "title": "Evolve and deliver your first skill", "topics": 6, "href": "curso/trilha4/modulo-4-2.html"}]}]}</script>
+<link href="../../assets/favicon.svg" rel="icon" type="image/svg+xml"/>
+<link href="../../assets/course.css" rel="stylesheet"/>
+<link href="../../assets/learn.css" rel="stylesheet"/>
+<link href="../../assets/patches.css" rel="stylesheet"/>
+<link href="https://inematds.github.io/agent-skills/curso/trilha4/modulo-4-1.html" hreflang="pt-BR" rel="alternate"/><link href="https://inematds.github.io/agent-skills/en/curso/trilha4/modulo-4-1.html" hreflang="en" rel="alternate"/><link href="https://inematds.github.io/agent-skills/es/curso/trilha4/modulo-4-1.html" hreflang="es" rel="alternate"/><link href="https://inematds.github.io/agent-skills/curso/trilha4/modulo-4-1.html" hreflang="x-default" rel="alternate"/><link href="https://inematds.github.io/agent-skills/en/curso/trilha4/modulo-4-1.html" rel="canonical"/><style id="course-language-css">[data-course-languages]{position:fixed;bottom:0;left:0;right:0;z-index:60;display:flex;gap:1.25rem;padding:.65rem;justify-content:center;background:#111827;color:#f3f4f6}[data-course-languages] a{color:inherit;font:14px system-ui}[data-course-languages] [aria-current]{font-weight:bold;text-decoration:underline}[data-course-languages] a:focus-visible{outline:2px solid #38bdf8;outline-offset:4px}body{padding-bottom:75px}</style></head>
+<body class="track-4">
+<a class="skip" href="#conteudo">Jump to content</a>
+<nav aria-label="Main navigation" class="site-nav">
+<div class="wrap nav-row">
+<a aria-label="Agent Skills, start" class="brand" href="../../index.html">
+<svg aria-hidden="true" fill="none" viewbox="0 0 32 32">
+<path d="m11 7-8 9 8 9M21 7l8 9-8 9M18 4l-4 24" stroke="currentColor" stroke-width="2.5"></path>
+</svg>
+<span class="brand-name">AGENT SKILLS</span>
+</a>
+<a class="text-sky-400" href="https://inema.club" rel="noopener" target="_blank">INEMA.CLUB</a>
+<div class="nav-links">
+<a class="" href="../../curso/trilha1/index.html">
+<span class="nav-full">Foundations</span>
+<span class="nav-short">T1</span>
+</a>
+<a class="" href="../../curso/trilha2/index.html">
+<span class="nav-full">Construction</span>
+<span class="nav-short">T2</span>
+</a>
+<a class="" href="../../curso/trilha3/index.html">
+<span class="nav-full">Verification</span>
+<span class="nav-short">T3</span>
+</a>
+<a aria-current="page" class="active" href="../../curso/trilha4/index.html">
+<span class="nav-full">Evolution</span>
+<span class="nav-short">T4</span>
+</a>
+</div>
+<button aria-label="Toggle light and dark theme" class="theme-toggle" id="theme-toggle">
+<svg aria-hidden="true" fill="none" viewbox="0 0 24 24">
+<circle cx="12" cy="12" r="4" stroke="currentColor" stroke-width="1.6"></circle>
+<path d="M12 1v3m0 16v3M1 12h3m16 0h3M4 4l2 2m12 12 2 2M4 20l2-2M18 6l2-2" stroke="currentColor" stroke-width="1.6"></path>
+</svg>
+</button>
+</div>
+</nav>
+<div class="wrap studybar">
+<div class="tools">
+<button data-inema-journey-open="">My learning journey</button>
+<button data-course-resume="">Continue reading</button>
+<div class="appearance-wrap">
+<button aria-controls="appearance" aria-expanded="false" data-inema-appearance-toggle="#appearance">Appearance</button>
+<div class="inema-appearance-pop" data-inema-appearance="" data-open="false" id="appearance">
+<h3>Theme</h3>
+<div class="inema-segment">
+<button aria-pressed="false" data-inema-set-theme="inema-dark">Dark</button>
+<button aria-pressed="false" data-inema-set-theme="claro">Light</button>
+<button aria-pressed="false" data-inema-set-theme="sepia">Sepia</button>
+<button aria-pressed="false" data-inema-set-theme="foco">Focus</button>
+<button aria-pressed="false" data-inema-set-theme="contraste">High contrast</button>
+</div>
+<h3>Font</h3>
+<div class="inema-segment">
+<button aria-pressed="false" data-inema-set-font="inter">Inter / system</button>
+<button aria-pressed="false" data-inema-set-font="system">System</button>
+<button aria-pressed="false" data-inema-set-font="leitura">Reading</button>
+</div>
+<h3>Size</h3>
+<div class="inema-segment">
+<button aria-pressed="false" data-inema-set-fontscale="100">100%</button>
+<button aria-pressed="false" data-inema-set-fontscale="112">112%</button>
+<button aria-pressed="false" data-inema-set-fontscale="125">125%</button>
+</div>
+<h3>Text width</h3>
+<div class="inema-segment">
+<button aria-pressed="false" data-inema-set-linewidth="60">Narrow</button>
+<button aria-pressed="false" data-inema-set-linewidth="68">Medium</button>
+<button aria-pressed="false" data-inema-set-linewidth="75">Wide</button>
+</div>
+<h3>Line spacing</h3>
+<div class="inema-segment">
+<button aria-pressed="false" data-inema-set-leading="1.45">Compact</button>
+<button aria-pressed="false" data-inema-set-leading="1.7">Comfortable</button>
+</div>
+<h3>Controls accent</h3>
+<div class="inema-segment">
+<button aria-pressed="false" data-inema-set-accent="emerald">Green</button>
+<button aria-pressed="false" data-inema-set-accent="blue">Blue</button>
+<button aria-pressed="false" data-inema-set-accent="purple">Purple</button>
+<button aria-pressed="false" data-inema-set-accent="amber">Amber</button>
+<button aria-pressed="false" data-inema-set-accent="teal">Turquoise</button>
+<button aria-pressed="false" data-inema-set-accent="rose">Pink</button>
+</div>
+</div>
+</div>
+</div>
+<div aria-label="Reading progress" aria-valuemax="100" aria-valuemin="0" aria-valuenow="0" class="meter" data-inema-meter="curso" role="progressbar">
+<div class="meter-top">
+<span data-inema-meter-frac="">0 of 0</span>
+<span data-inema-meter-pct="">0%</span>
+</div>
+<div class="inema-bar">
+<div data-inema-meter-fill="">
+</div>
+</div>
+</div>
+</div>
+<noscript>
+<p class="wrap no-script">You can read all the lessons without JavaScript. Progress, grades, and appearance controls require JavaScript.</p>
+</noscript>
+<main class="wrap" id="conteudo">
+<div class="breadcrumb">
+<a href="../../index.html">Start</a> / <a href="index.html">Evolution</a> / Module 4.1</div>
+<header class="hero">
+<span class="pill">MODULE 4.1</span>
+<h1>Compare quality, cost, and effort</h1>
+<p class="lead">Do the walk it down with equivalent cases and decisions supported by results.</p>
+<p>
+<strong>At the end:</strong> Plan a fair comparison and calculate cost per accepted delivery.</p>
+</header>
+<div class="stats">
+<div class="stat">
+<strong>6</strong>
+<span>topics</span>
+</div>
+<div class="stat">
+<strong>55 min</strong>
+<span>estimated with hands-on practice</span>
+</div>
+<div class="stat">
+<strong>6</strong>
+<span>commented exercises</span>
+</div>
+<div class="stat">
+<strong>1</strong>
+<span>final check</span>
+</div>
+</div>
+<div class="reading-layout">
+<aside aria-label="Module index" class="toc" data-inema-toc="">
+<h2>In this module</h2>
+<span data-inema-section-counter="">Section 1 of 6</span>
+<ol>
+<li>
+<a href="#topico-1">1. Establish a reference configuration</a>
+</li>
+<li>
+<a href="#topico-2">2. Compare one variable at a time</a>
+</li>
+<li>
+<a href="#topico-3">3. Choose cases that represent the real work</a>
+</li>
+<li>
+<a href="#topico-4">4. Calculate the cost per accepted delivery</a>
+</li>
+<li>
+<a href="#topico-5">5. Reduce effort with a quality gate</a>
+</li>
+<li>
+<a href="#topico-6">6. Record a decision that can be reviewed</a>
+</li>
+</ol>
+<div aria-label="Reading progress" aria-valuemax="100" aria-valuemin="0" aria-valuenow="0" class="meter" data-inema-meter="modulo:4-1" role="progressbar">
+<div class="meter-top">
+<span data-inema-meter-frac="">0 of 0</span>
+<span data-inema-meter-pct="">0%</span>
+</div>
+<div class="inema-bar">
+<div data-inema-meter-fill="">
+</div>
+</div>
+</div>
+<p class="muted">Select a portion of the explanations to highlight or annotate.</p>
+</aside>
+<article class="lesson-content" data-inema-module="4-1" data-inema-track="4">
+<section class="lesson" data-inema-topic="modulo-4-1#topico-1" id="topico-1">
+<div class="lesson-head">
+<span class="circle">1</span>
+<h2>Establish a reference configuration</h2>
+</div>
+<figure class="diagram">
+<div aria-label="Diagram with horizontal scrolling on small screens" class="diagram-scroll" role="region" tabindex="0">
+<svg aria-label="Stable skill → fixed cases → Configuration A → measured reference" class="w-full h-auto" role="img" viewbox="0 0 720 200">
+<defs>
+<pattern height="24" id="d4-1-1-grid" patternunits="userSpaceOnUse" width="24">
+<circle cx="2" cy="2" fill="#fbbf24" opacity=".13" r="1"></circle>
+</pattern>
+<filter id="d4-1-1-glow">
+<fegaussianblur result="b" stddeviation="1.8"></fegaussianblur>
+<femerge>
+<femergenode in="b"></femergenode>
+<femergenode in="SourceGraphic"></femergenode>
+</femerge>
+</filter>
+<marker id="d4-1-1-arrow" markerheight="7" markerwidth="7" orient="auto" refx="6" refy="3.5">
+<path d="M0 0 7 3.5 0 7" fill="#fbbf24"></path>
+</marker>
+</defs>
+<rect fill="#0f172a" height="200" width="720"></rect>
+<rect fill="url(#d4-1-1-grid)" height="200" width="720"></rect>
+<path d="M179 65 H192 V91 H197" fill="none" marker-end="url(#d4-1-1-arrow)" opacity=".6" stroke="#fbbf24" stroke-width="1.8"></path>
+<g>
+<rect fill="#111827" filter="url(#d4-1-1-glow)" height="72" rx="10" stroke="#fbbf24" stroke-width="2" width="150" x="25" y="25"></rect>
+<text fill="#e5e7eb" font-size="14" font-weight="600" text-anchor="middle" x="100.0" y="66.0">Stable skill</text>
+</g>
+<path d="M354 91 H367 V117 H372" fill="none" marker-end="url(#d4-1-1-arrow)" opacity=".6" stroke="#fbbf24" stroke-width="1.8"></path>
+<g>
+<rect fill="#111827" height="72" rx="10" stroke="#38bdf8" stroke-width="2" width="150" x="200" y="51"></rect>
+<text fill="#e5e7eb" font-size="14" font-weight="600" text-anchor="middle" x="275.0" y="92.0">Fixed cases</text>
+</g>
+<path d="M529 117 H542 V143 H547" fill="none" marker-end="url(#d4-1-1-arrow)" opacity=".6" stroke="#fbbf24" stroke-width="1.8"></path>
+<g>
+<rect fill="#111827" height="72" rx="10" stroke="#38bdf8" stroke-width="2" width="150" x="375" y="77"></rect>
+<text fill="#e5e7eb" font-size="14" font-weight="600" text-anchor="middle" x="450.0" y="118.0">Configuration A</text>
+</g>
+<g>
+<rect fill="#111827" height="72" rx="10" stroke="#38bdf8" stroke-width="2" width="150" x="550" y="103"></rect>
+<text fill="#e5e7eb" font-size="14" font-weight="600" text-anchor="middle" x="625.0" y="144.0">Measured reference</text>
+</g>
+</svg>
+</div>
+<figcaption>First demonstrate that the task is executable; then look for a more economical configuration.</figcaption>
+</figure>
+<div class="inema-prose">
+<h3>What it is</h3>
+<p data-inema-block="m4-1-t1-p1" id="m4-1-t1-p1">The walk it down starts with a configuration that can accomplish the task. Record model, available effort, tools, skill version, and the cases used. This is the reference against which lighter alternatives will be compared.</p>
+<h3>Why learn</h3>
+<p data-inema-block="m4-1-t1-p2" id="m4-1-t1-p2">Without a baseline you don’t know whether the drop in quality came from the configuration, the data, or the instruction. The names and results cited in the video are examples from that experiment, not a guaranteed price or performance hierarchy.</p>
+<h3>Key concepts</h3>
+</div>
+<div class="key-grid">
+<div class="key">
+<strong>Baseline</strong>configuration that passed.</div>
+<div class="key">
+<strong>Version</strong>instruction frozen.</div>
+<div class="key">
+<strong>Environment</strong>same tools.</div>
+<div class="key">
+<strong>Record</strong>observed cost, time, and quality.</div>
+</div>
+<div class="code-box">
+<div class="code-head">
+<span>COMMENTED EXAMPLE · 4.1.1</span>
+<button data-copy="code-4-1-1">Copy example</button>
+</div>
+<pre id="code-4-1-1">
+<code>Experiment E01
+Skill: version 1.0.0
+Cases: C01 to C08
+Model: identifier available in your account
+Effort: value supported by the interface
+Record: approval, time, consumption, and rework.</code>
+</pre>
+</div>
+<div class="comparison">
+<div class="compare-good">
+<h3>✓ Do it like this</h3>
+<p>Use names and options that are actually available in the environment.</p>
+</div>
+<div class="compare-bad">
+<h3>✗ Avoid this mistake</h3>
+<p>Fix course pricing or menus that may change.</p>
+</div>
+</div>
+<aside class="tip">
+<strong>Bring it to your skill.</strong> First demonstrate that the task is executable; then look for a more cost-effective configuration. Use this principle to review the example before moving on.</aside>
+<div class="practice">
+<h3>Practice before revealing</h3>
+<p>What information is missing in “model B was faster” ?</p>
+<details>
+<summary>View commented response</summary>
+<p>Cases, number of runs, acceptance criteria, tools, effort, and time variation. A comparative statement needs those conditions.</p>
+</details>
+</div>
+<div class="read-controls">
+<button aria-pressed="false" data-inema-read-toggle="">
+<span aria-hidden="true">✓</span>
+<span data-inema-read-label="">Mark as read</span>
+</button>
+<button aria-pressed="false" data-inema-doubt-toggle="">I have a question</button>
+</div>
+</section>
+<section class="lesson" data-inema-topic="modulo-4-1#topico-2" id="topico-2">
+<div class="lesson-head">
+<span class="circle">2</span>
+<h2>Compare one variable at a time</h2>
+</div>
+<figure class="diagram">
+<div aria-label="Diagram with horizontal scrolling on small screens" class="diagram-scroll" role="region" tabindex="0">
+<svg aria-label="Model A → same cases → Model B → same rubric" class="w-full h-auto" role="img" viewbox="0 0 720 200">
+<defs>
+<pattern height="24" id="d4-1-2-grid" patternunits="userSpaceOnUse" width="24">
+<circle cx="2" cy="2" fill="#fbbf24" opacity=".13" r="1"></circle>
+</pattern>
+<filter id="d4-1-2-glow">
+<fegaussianblur result="b" stddeviation="1.8"></fegaussianblur>
+<femerge>
+<femergenode in="b"></femergenode>
+<femergenode in="SourceGraphic"></femergenode>
+</femerge>
+</filter>
+<marker id="d4-1-2-arrow" markerheight="7" markerwidth="7" orient="auto" refx="6" refy="3.5">
+<path d="M0 0 7 3.5 0 7" fill="#fbbf24"></path>
+</marker>
+</defs>
+<rect fill="#0f172a" height="200" width="720"></rect>
+<rect fill="url(#d4-1-2-grid)" height="200" width="720"></rect>
+<path d="M170 137 H182 V110 H192" fill="none" marker-end="url(#d4-1-2-arrow)" opacity=".6" stroke="#fbbf24" stroke-width="1.8"></path>
+<g>
+<rect fill="#111827" filter="url(#d4-1-2-glow)" height="62" rx="10" stroke="#fbbf24" stroke-width="2" width="150" x="20" y="105"></rect>
+<text fill="#e5e7eb" font-size="14" font-weight="600" text-anchor="middle" x="95.0" y="141.0">Model A</text>
+</g>
+<path d="M345 110 H357 V83 H367" fill="none" marker-end="url(#d4-1-2-arrow)" opacity=".6" stroke="#fbbf24" stroke-width="1.8"></path>
+<g>
+<rect fill="#111827" height="62" rx="10" stroke="#38bdf8" stroke-width="2" width="150" x="195" y="78"></rect>
+<text fill="#e5e7eb" font-size="14" font-weight="600" text-anchor="middle" x="270.0" y="114.0">Same cases</text>
+</g>
+<path d="M520 83 H532 V56 H542" fill="none" marker-end="url(#d4-1-2-arrow)" opacity=".6" stroke="#fbbf24" stroke-width="1.8"></path>
+<g>
+<rect fill="#111827" height="62" rx="10" stroke="#38bdf8" stroke-width="2" width="150" x="370" y="51"></rect>
+<text fill="#e5e7eb" font-size="14" font-weight="600" text-anchor="middle" x="445.0" y="87.0">Model B</text>
+</g>
+<g>
+<rect fill="#111827" height="62" rx="10" stroke="#38bdf8" stroke-width="2" width="150" x="545" y="24"></rect>
+<text fill="#e5e7eb" font-size="14" font-weight="600" text-anchor="middle" x="620.0" y="60.0">Same rubric</text>
+</g>
+</svg>
+</div>
+<figcaption>The comparison is fair when the candidates face the same relevant conditions.</figcaption>
+</figure>
+<div class="inema-prose">
+<h3>What it is</h3>
+<p data-inema-block="m4-1-t2-p1" id="m4-1-t2-p1">Keep cases, skill, and rubric the same when changing the model. After you pick a candidate, test another effort level if the interface offers that control. Don’t assume all models accept the same options.</p>
+<h3>Why learn</h3>
+<p data-inema-block="m4-1-t2-p2" id="m4-1-t2-p2">Changing the model, prompt, and tool all at once prevents attributing the difference to a single cause. A simple, controlled comparison is worth more than a big spreadsheet full of incompatible conditions.</p>
+<h3>Key concepts</h3>
+</div>
+<div class="key-grid">
+<div class="key">
+<strong>Independent variable</strong>what changes.</div>
+<div class="key">
+<strong>Controls</strong>what stays the same.</div>
+<div class="key">
+<strong>Repetitions</strong>variation between runs.</div>
+<div class="key">
+<strong>Order</strong>alternate to reduce momentum effects.</div>
+</div>
+<div class="code-box">
+<div class="code-head">
+<span>COMMENTED EXAMPLE · 4.1.2</span>
+<button data-copy="code-4-1-2">Copy example</button>
+</div>
+<pre id="code-4-1-2">
+<code>Round 1: model A vs B, equivalent effort when possible.
+Round 2: best candidate, high vs medium effort.
+Round 3: validate the choice on reserved cases.
+If options aren’t equivalent, record the difference.</code>
+</pre>
+</div>
+<div class="timeline">
+<h3>From concept to action</h3>
+<ol>
+<li>Model A: identify the initial condition.</li>
+<li>Same cases: apply the described decision.</li>
+<li>Model B: check the effect in the example.</li>
+<li>Same rubric: record the output evidence.</li>
+</ol>
+</div>
+<div class="comparison">
+<div class="compare-good">
+<h3>✓ Do it like this</h3>
+<p>Keep inputs frozen during the comparison.</p>
+</div>
+<div class="compare-bad">
+<h3>✗ Avoid this mistake</h3>
+<p>Improve the skill for only one candidate and call the test fair.</p>
+</div>
+</div>
+<div class="practice">
+<h3>Practice before revealing</h3>
+<p>You changed the prompt to help B. What should you do before comparing?</p>
+<details>
+<summary>View commented response</summary>
+<p>Run A again with the same skill version, or declare that they are two different systems. The important part is not attributing an instruction change to the model.</p>
+</details>
+</div>
+<div class="read-controls">
+<button aria-pressed="false" data-inema-read-toggle="">
+<span aria-hidden="true">✓</span>
+<span data-inema-read-label="">Mark as read</span>
+</button>
+<button aria-pressed="false" data-inema-doubt-toggle="">I have a question</button>
+</div>
+</section>
+<section class="lesson" data-inema-topic="modulo-4-1#topico-3" id="topico-3">
+<div class="lesson-head">
+<span class="circle">3</span>
+<h2>Choose cases that represent the real work</h2>
+</div>
+<figure class="diagram">
+<div aria-label="Diagram with horizontal scrolling on small screens" class="diagram-scroll" role="region" tabindex="0">
+<svg aria-label="Screen → Speech → Charts → Reserved cases" class="w-full h-auto" role="img" viewbox="0 0 720 200">
+<defs>
+<pattern height="24" id="d4-1-3-grid" patternunits="userSpaceOnUse" width="24">
+<circle cx="2" cy="2" fill="#fbbf24" opacity=".13" r="1"></circle>
+</pattern>
+<filter id="d4-1-3-glow">
+<fegaussianblur result="b" stddeviation="1.8"></fegaussianblur>
+<femerge>
+<femergenode in="b"></femergenode>
+<femergenode in="SourceGraphic"></femergenode>
+</femerge>
+</filter>
+<marker id="d4-1-3-arrow" markerheight="7" markerwidth="7" orient="auto" refx="6" refy="3.5">
+<path d="M0 0 7 3.5 0 7" fill="#fbbf24"></path>
+</marker>
+</defs>
+<rect fill="#0f172a" height="200" width="720"></rect>
+<rect fill="url(#d4-1-3-grid)" height="200" width="720"></rect>
+<path d="M225 100 C310 100 315 34 365 34" fill="none" marker-end="url(#d4-1-3-arrow)" opacity=".6" stroke="#fbbf24" stroke-width="1.8"></path>
+<path d="M225 100 C310 100 315 100 365 100" fill="none" marker-end="url(#d4-1-3-arrow)" opacity=".6" stroke="#fbbf24" stroke-width="1.8"></path>
+<path d="M225 100 C310 100 315 166 365 166" fill="none" marker-end="url(#d4-1-3-arrow)" opacity=".6" stroke="#fbbf24" stroke-width="1.8"></path>
+<g>
+<rect fill="#111827" filter="url(#d4-1-3-glow)" height="70" rx="10" stroke="#fbbf24" stroke-width="2" width="205" x="20" y="65"></rect>
+<text fill="#e5e7eb" font-size="14" font-weight="600" text-anchor="middle" x="122.5" y="105.0">Screen</text>
+</g>
+<g>
+<rect fill="#111827" height="48" rx="10" stroke="#38bdf8" stroke-width="2" width="325" x="370" y="10"></rect>
+<text fill="#e5e7eb" font-size="14" font-weight="600" text-anchor="middle" x="532.5" y="39.0">Speech</text>
+</g>
+<g>
+<rect fill="#111827" height="48" rx="10" stroke="#38bdf8" stroke-width="2" width="325" x="370" y="76"></rect>
+<text fill="#e5e7eb" font-size="14" font-weight="600" text-anchor="middle" x="532.5" y="105.0">Charts</text>
+</g>
+<g>
+<rect fill="#111827" height="48" rx="10" stroke="#38bdf8" stroke-width="2" width="325" x="370" y="142"></rect>
+<text fill="#e5e7eb" font-size="14" font-weight="600" text-anchor="middle" x="532.5" y="171.0">Reserved cases</text>
+</g>
+</svg>
+</div>
+<figcaption>The sample must reflect what you receive, including difficult cases that don’t fit the average.</figcaption>
+</figure>
+<div class="inema-prose">
+<h3>What it is</h3>
+<p data-inema-block="m4-1-t3-p1" id="m4-1-t3-p1">In the video’s visual study, one candidate was better on certain crops and worse on others. To find what works for your job, include examples of different natures: screen demonstrations, talk with few images, and content with charts.</p>
+<h3>Why learn</h3>
+<p data-inema-block="m4-1-t3-p2" id="m4-1-t3-p2">A single example favors coincidences. Repeat important cases and examine where the configuration fails, not just your average. A high acceptance rate can hide a serious error in a rare but essential type.</p>
+<h3>Key concepts</h3>
+</div>
+<div class="key-grid">
+<div class="key">
+<strong>Diversity</strong>input types.</div>
+<div class="key">
+<strong>Output instability</strong> repetition.</div>
+<div class="key">
+<strong>Stratify</strong> results by category.</div>
+<div class="key">
+<strong>Reserved case</strong> test outside the tuning.</div>
+</div>
+<div class="code-box">
+<div class="code-head">
+<span>COMMENTED EXAMPLE · 4.1.3</span>
+<button data-copy="code-4-1-3">Copy example</button>
+</div>
+<pre id="code-4-1-3">
+<code>Report: normal, empty, missing field, invalid value.
+Article: tutorial, interview, presentation with charts.
+Repeat the cases with the highest risk and save raw results.</code>
+</pre>
+</div>
+<div class="comparison">
+<div class="compare-good">
+<h3>✓ Do it like this</h3>
+<p>Publish the sample size alongside the acceptance rate.</p>
+</div>
+<div class="compare-bad">
+<h3>✗ Avoid this mistake</h3>
+<p>Generalize task performance across all skills.</p>
+</div>
+</div>
+<div class="practice">
+<h3>Practice before revealing</h3>
+<p>A configuration passes in 9 out of 10 cases, but invents a value in the tenth. Can it win by average?</p>
+<details>
+<summary>View commented response</summary>
+<p>Not inventing values is blocking. The acceptance policy needs to be applied before comparing costs; the average doesn’t compensate for a critical failure.</p>
+</details>
+</div>
+<div class="read-controls">
+<button aria-pressed="false" data-inema-read-toggle="">
+<span aria-hidden="true">✓</span>
+<span data-inema-read-label="">Mark as read</span>
+</button>
+<button aria-pressed="false" data-inema-doubt-toggle="">I have a question</button>
+</div>
+</section>
+<section class="lesson" data-inema-topic="modulo-4-1#topico-4" id="topico-4">
+<div class="lesson-head">
+<span class="circle">4</span>
+<h2>Calculate cost per accepted delivery</h2>
+</div>
+<figure class="diagram">
+<div aria-label="Diagram with horizontal scrolling on small screens" class="diagram-scroll" role="region" tabindex="0">
+<svg aria-label="Attempts → Accumulated cost → Accepted deliveries → Effective cost" class="w-full h-auto" role="img" viewbox="0 0 720 200">
+<defs>
+<pattern height="24" id="d4-1-4-grid" patternunits="userSpaceOnUse" width="24">
+<circle cx="2" cy="2" fill="#fbbf24" opacity=".13" r="1"></circle>
+</pattern>
+<filter id="d4-1-4-glow">
+<fegaussianblur result="b" stddeviation="1.8"></fegaussianblur>
+<femerge>
+<femergenode in="b"></femergenode>
+<femergenode in="SourceGraphic"></femergenode>
+</femerge>
+</filter>
+<marker id="d4-1-4-arrow" markerheight="7" markerwidth="7" orient="auto" refx="6" refy="3.5">
+<path d="M0 0 7 3.5 0 7" fill="#fbbf24"></path>
+</marker>
+</defs>
+<rect fill="#0f172a" height="200" width="720"></rect>
+<rect fill="url(#d4-1-4-grid)" height="200" width="720"></rect>
+<path d="M175 100 H193" fill="none" marker-end="url(#d4-1-4-arrow)" opacity=".6" stroke="#fbbf24" stroke-width="1.8"></path>
+<g>
+<rect fill="#111827" filter="url(#d4-1-4-glow)" height="74" rx="10" stroke="#fbbf24" stroke-width="2" width="150" x="20" y="63"></rect>
+<text fill="#e5e7eb" font-size="14" font-weight="600" text-anchor="middle" x="95.0" y="105.0">Attempts</text>
+</g>
+<path d="M350 100 H368" fill="none" marker-end="url(#d4-1-4-arrow)" opacity=".6" stroke="#fbbf24" stroke-width="1.8"></path>
+<g>
+<rect fill="#111827" height="74" rx="10" stroke="#38bdf8" stroke-width="2" width="150" x="195" y="63"></rect>
+<text fill="#e5e7eb" font-size="14" font-weight="600" text-anchor="middle" x="270.0" y="105.0">Accumulated cost</text>
+</g>
+<path d="M525 100 H543" fill="none" marker-end="url(#d4-1-4-arrow)" opacity=".6" stroke="#fbbf24" stroke-width="1.8"></path>
+<g>
+<rect fill="#111827" height="74" rx="10" stroke="#38bdf8" stroke-width="2" width="150" x="370" y="63"></rect>
+<text fill="#e5e7eb" font-size="14" font-weight="600" text-anchor="middle" x="445.0" y="105.0">Accepted deliveries</text>
+</g>
+<g>
+<rect fill="#111827" height="74" rx="10" stroke="#38bdf8" stroke-width="2" width="150" x="545" y="63"></rect>
+<text fill="#e5e7eb" font-size="14" font-weight="600" text-anchor="middle" x="620.0" y="105.0">Effective cost</text>
+</g>
+</svg>
+</div>
+<figcaption>The numbers are synthetic and meant for learning the calculation; they are not model prices.</figcaption>
+</figure>
+<div class="inema-prose">
+<h3>What it is</h3>
+<p data-inema-block="m4-1-t4-p1" id="m4-1-t4-p1">The price per call is only part of the cost. Include attempts and corrections. In the didactic example, A spends 12 units for 10 accepted deliveries; B spends 8 for 5. A costs 1.20 per accepted delivery and B costs 1.60.</p>
+<h3>Why learn</h3>
+<p data-inema-block="m4-1-t4-p2" id="m4-1-t4-p2">A nominally cheap configuration can consume more resources because of rework. Record human time separately or establish an explicit way to monetize it. Don’t mix API cost with a subscription without explaining the method.</p>
+<h3>Key concepts</h3>
+</div>
+<div class="key-grid">
+<div class="key">
+<strong>Total cost</strong> of all relevant attempts.</div>
+<div class="key">
+<strong>Accepted deliveries</strong> passed the contract.</div>
+<div class="key">
+<strong>Effective cost</strong> total divided by acceptances.</div>
+<div class="key">
+<strong>Zero acceptances</strong> means effective cost is not zero.</div>
+</div>
+<div class="code-box">
+<div class="code-head">
+<span>COMMENTED EXAMPLE · 4.1.4</span>
+<button data-copy="code-4-1-4">Copy example</button>
+</div>
+<pre id="code-4-1-4">
+<code>A: 12 units / 10 accepted = 1.20 per acceptance
+B: 8 units / 5 accepted = 1.60 per acceptance
+If accepted = 0: no finite cost per acceptance exists.
+Human review time: record in a separate column.</code>
+</pre>
+</div>
+<div class="comparison">
+<div class="compare-good">
+<h3>✓ Do it like this</h3>
+<p>Add up the cost of the attempts that failed.</p>
+</div>
+<div class="compare-bad">
+<h3>✗ Avoid this mistake</h3>
+<p>Exclude retries to make the alternative look cheaper.</p>
+</div>
+</div>
+<aside class="tip">
+<strong>Bring it to your skill.</strong> The numbers are synthetic and meant for learning the calculation; they are not model prices. Use this principle to review the example before moving on.</aside>
+<div class="practice">
+<h3>Practice before revealing</h3>
+<p>C costs 9 units and approves 6 outputs. What’s the cost per acceptance?</p>
+<details>
+<summary>View commented response</summary>
+<p>1.50 units per accepted delivery. Only compare with A and B if the quality criterion and the set of cases are equivalent.</p>
+</details>
+</div>
+<div class="read-controls">
+<button aria-pressed="false" data-inema-read-toggle="">
+<span aria-hidden="true">✓</span>
+<span data-inema-read-label="">Mark as read</span>
+</button>
+<button aria-pressed="false" data-inema-doubt-toggle="">I have a question</button>
+</div>
+</section>
+<section aria-labelledby="calc-title" class="calc">
+<span class="eyebrow">SIMULATOR · DIDACTIC NUMBERS</span>
+<h2 id="calc-title">How much does each accepted delivery cost?</h2>
+<label>Total cost: <strong id="cost-value">12</strong> units<input id="cost" max="50" min="1" type="range" value="12"/>
+</label>
+<label>Accepted deliveries: <strong id="accepted-value">10</strong>
+<input id="accepted" max="20" min="0" type="range" value="10"/>
+</label>
+<output aria-live="polite" id="effective">1.20 units per acceptance</output>
+<p class="muted">Include unsuccessful attempts in the cost. This simulation does not query service prices.</p>
+</section>
+<section class="lesson" data-inema-topic="modulo-4-1#topico-5" id="topico-5">
+<div class="lesson-head">
+<span class="circle">5</span>
+<h2>Reduce effort with a quality gate</h2>
+</div>
+<figure class="diagram">
+<div aria-label="Diagram with horizontal scrolling on small screens" class="diagram-scroll" role="region" tabindex="0">
+<svg aria-label="Approved reference → Reduce effort → Reevaluate → Adopt or roll back" class="w-full h-auto" role="img" viewbox="0 0 720 200">
+<defs>
+<pattern height="24" id="d4-1-5-grid" patternunits="userSpaceOnUse" width="24">
+<circle cx="2" cy="2" fill="#fbbf24" opacity=".13" r="1"></circle>
+</pattern>
+<filter id="d4-1-5-glow">
+<fegaussianblur result="b" stddeviation="1.8"></fegaussianblur>
+<femerge>
+<femergenode in="b"></femergenode>
+<femergenode in="SourceGraphic"></femergenode>
+</femerge>
+</filter>
+<marker id="d4-1-5-arrow" markerheight="7" markerwidth="7" orient="auto" refx="6" refy="3.5">
+<path d="M0 0 7 3.5 0 7" fill="#fbbf24"></path>
+</marker>
+</defs>
+<rect fill="#0f172a" height="200" width="720"></rect>
+<rect fill="url(#d4-1-5-grid)" height="200" width="720"></rect>
+<path d="M170 137 H182 V110 H192" fill="none" marker-end="url(#d4-1-5-arrow)" opacity=".6" stroke="#fbbf24" stroke-width="1.8"></path>
+<g>
+<rect fill="#111827" filter="url(#d4-1-5-glow)" height="62" rx="10" stroke="#fbbf24" stroke-width="2" width="150" x="20" y="105"></rect>
+<text fill="#e5e7eb" font-size="14" font-weight="600" text-anchor="middle" x="95.0" y="141.0">Approved reference</text>
+</g>
+<path d="M345 110 H357 V83 H367" fill="none" marker-end="url(#d4-1-5-arrow)" opacity=".6" stroke="#fbbf24" stroke-width="1.8"></path>
+<g>
+<rect fill="#111827" height="62" rx="10" stroke="#38bdf8" stroke-width="2" width="150" x="195" y="78"></rect>
+<text fill="#e5e7eb" font-size="14" font-weight="600" text-anchor="middle" x="270.0" y="114.0">Reduce effort</text>
+</g>
+<path d="M520 83 H532 V56 H542" fill="none" marker-end="url(#d4-1-5-arrow)" opacity=".6" stroke="#fbbf24" stroke-width="1.8"></path>
+<g>
+<rect fill="#111827" height="62" rx="10" stroke="#38bdf8" stroke-width="2" width="150" x="370" y="51"></rect>
+<text fill="#e5e7eb" font-size="14" font-weight="600" text-anchor="middle" x="445.0" y="87.0">Reevaluate</text>
+</g>
+<g>
+<rect fill="#111827" height="62" rx="10" stroke="#38bdf8" stroke-width="2" width="150" x="545" y="24"></rect>
+<text fill="#e5e7eb" font-size="14" font-weight="600" text-anchor="middle" x="620.0" y="60.0">Adopt or roll back</text>
+</g>
+</svg>
+</div>
+<figcaption>Only step down one more rung after checking the effect of the previous rung.</figcaption>
+</figure>
+<div class="inema-prose">
+<h3>What it is</h3>
+<p data-inema-block="m4-1-t5-p1" id="m4-1-t5-p1">After you find a suitable model, try reducing effort when that control exists. The decision depends on observed quality, time, and consumption. More effort is not a guarantee of better results for every task.</p>
+<h3>Why learn</h3>
+<p data-inema-block="m4-1-t5-p2" id="m4-1-t5-p2">A skill with clear rules and a calculation script may require less deliberation than a complex visual review. The quality gate prevents the economy from removing exactly the check that avoids errors.</p>
+<h3>Key concepts</h3>
+</div>
+<div class="key-grid">
+<div class="key">
+<strong>Candidate</strong> configuration to try.</div>
+<div class="key">
+<strong>Quality gate</strong> immutable minimum criteria.</div>
+<div class="key">
+<strong>Acceptance</strong> demonstrated in the cases.</div>
+<div class="key">
+<strong>Rollback</strong> return to the reference if it fails.</div>
+</div>
+<div class="code-box">
+<div class="code-head">
+<span>COMMENTED EXAMPLE · 4.1.5</span>
+<button data-copy="code-4-1-5">Copy example</button>
+</div>
+<pre id="code-4-1-5">
+<code>Current configuration → passes the suite.
+Lower effort → run the same suite.
+Did it pass without relevant regressions? Compare time and cost.
+Did it fail? Roll back to the reference or investigate the skill.</code>
+</pre>
+</div>
+<div class="timeline">
+<h3>From concept to action</h3>
+<ol>
+<li>Approved reference: identify the initial condition.</li>
+<li>Reduce effort: apply the described decision.</li>
+<li>Reevaluate: check the effect in the example.</li>
+<li>Adopt or roll back: record the output evidence.</li>
+</ol>
+</div>
+<div class="comparison">
+<div class="compare-good">
+<h3>✓ Do it like this</h3>
+<p>Save the previous configuration for rollback.</p>
+</div>
+<div class="compare-bad">
+<h3>✗ Avoid this mistake</h3>
+<p>Skip the review to reduce time and call it optimization.</p>
+</div>
+</div>
+<div class="practice">
+<h3>Practice before revealing</h3>
+<p>The lightweight configuration works in summary, but fails on visual cropping. What does that suggest?</p>
+<details>
+<summary>View commented response</summary>
+<p>Possibly split the flow and use different configurations per stage, if the environment allows it. The decision needs a new integrated test; splitting stages also adds cost and complexity.</p>
+</details>
+</div>
+<div class="read-controls">
+<button aria-pressed="false" data-inema-read-toggle="">
+<span aria-hidden="true">✓</span>
+<span data-inema-read-label="">Mark as read</span>
+</button>
+<button aria-pressed="false" data-inema-doubt-toggle="">I have a question</button>
+</div>
+</section>
+<section class="lesson" data-inema-topic="modulo-4-1#topico-6" id="topico-6">
+<div class="lesson-head">
+<span class="circle">6</span>
+<h2>Record a decision that can be revisited</h2>
+</div>
+<figure class="diagram">
+<div aria-label="Diagram with horizontal scrolling on small screens" class="diagram-scroll" role="region" tabindex="0">
+<svg aria-label="Results → Choice → Limitations → Reevaluate when changing" class="w-full h-auto" role="img" viewbox="0 0 720 200">
+<defs>
+<pattern height="24" id="d4-1-6-grid" patternunits="userSpaceOnUse" width="24">
+<circle cx="2" cy="2" fill="#fbbf24" opacity=".13" r="1"></circle>
+</pattern>
+<filter id="d4-1-6-glow">
+<fegaussianblur result="b" stddeviation="1.8"></fegaussianblur>
+<femerge>
+<femergenode in="b"></femergenode>
+<femergenode in="SourceGraphic"></femergenode>
+</femerge>
+</filter>
+<marker id="d4-1-6-arrow" markerheight="7" markerwidth="7" orient="auto" refx="6" refy="3.5">
+<path d="M0 0 7 3.5 0 7" fill="#fbbf24"></path>
+</marker>
+</defs>
+<rect fill="#0f172a" height="200" width="720"></rect>
+<rect fill="url(#d4-1-6-grid)" height="200" width="720"></rect>
+<path d="M280 54 H414" fill="none" marker-end="url(#d4-1-6-arrow)" opacity=".6" stroke="#fbbf24" stroke-width="1.8"></path>
+<path d="M540 87 V110" fill="none" marker-end="url(#d4-1-6-arrow)" opacity=".6" stroke="#fbbf24" stroke-width="1.8"></path>
+<path d="M420 148 H287" fill="none" marker-end="url(#d4-1-6-arrow)" opacity=".6" stroke="#fbbf24" stroke-width="1.8"></path>
+<path d="M160 116 V92" fill="none" marker-end="url(#d4-1-6-arrow)" opacity=".6" stroke="#fbbf24" stroke-width="1.8"></path>
+<g>
+<rect fill="#111827" filter="url(#d4-1-6-glow)" height="64" rx="10" stroke="#fbbf24" stroke-width="2" width="240" x="40" y="22"></rect>
+<text fill="#e5e7eb" font-size="14" font-weight="600" text-anchor="middle" x="160.0" y="59.0">Results</text>
+</g>
+<g>
+<rect fill="#111827" height="64" rx="10" stroke="#38bdf8" stroke-width="2" width="240" x="420" y="22"></rect>
+<text fill="#e5e7eb" font-size="14" font-weight="600" text-anchor="middle" x="540.0" y="59.0">Choice</text>
+</g>
+<g>
+<rect fill="#111827" height="64" rx="10" stroke="#38bdf8" stroke-width="2" width="240" x="420" y="116"></rect>
+<text fill="#e5e7eb" font-size="14" font-weight="600" text-anchor="middle" x="540.0" y="153.0">Limitations</text>
+</g>
+<g>
+<rect fill="#111827" height="64" rx="10" stroke="#38bdf8" stroke-width="2" width="240" x="40" y="116"></rect>
+<text fill="#e5e7eb" font-size="14" font-weight="600" text-anchor="middle" x="160.0" y="144.0">Reevaluate when</text>
+<text fill="#e5e7eb" font-size="14" font-weight="600" text-anchor="middle" x="160.0" y="163.0">change</text>
+</g>
+</svg>
+</div>
+<figcaption>A good decision stays understandable when someone else needs to review it.</figcaption>
+</figure>
+<div class="inema-prose">
+<h3>What it is</h3>
+<p data-inema-block="m4-1-t6-p1" id="m4-1-t6-p1">The result of the experiment must state which configuration was chosen, why, in which cases, and with what limits. Include a review date or events that justify repeating the comparison: a new tool, model, input type, or a contract change.</p>
+<h3>Why learn</h3>
+<p data-inema-block="m4-1-t6-p2" id="m4-1-t6-p2">Optimization is a situated decision. An update can change behavior or availability. Keeping the evidence lets you revisit the choice without starting from vague opinions or from remembering the best example.</p>
+<h3>Key concepts</h3>
+</div>
+<div class="key-grid">
+<div class="key">
+<strong>Decision</strong> adopted configuration.</div>
+<div class="key">
+<strong>Scope</strong> covered tasks.</div>
+<div class="key">
+<strong>Evidence</strong> results and artifacts.</div>
+<div class="key">
+<strong>Review trigger</strong> relevant change.</div>
+</div>
+<div class="code-box">
+<div class="code-head">
+<span>COMMENTED EXAMPLE · 4.1.6</span>
+<button data-copy="code-4-1-6">Copy example</button>
+</div>
+<pre id="code-4-1-6">
+<code>Choice: configuration B for text summaries.
+Base: passed on 12 cases, 3 rounds per case.
+Limit: not evaluated for image editing.
+Reevaluate: model change, rubric change, or input change.</code>
+</pre>
+</div>
+<div class="comparison">
+<div class="compare-good">
+<h3>✓ Do it like this</h3>
+<p>Differentiate measurement, estimation, and information not available.</p>
+</div>
+<div class="compare-bad">
+<h3>✗ Avoid this mistake</h3>
+<p>State “the best model” without specifying the task and conditions.</p>
+</div>
+</div>
+<div class="practice">
+<h3>Practice before revealing</h3>
+<p>What conclusion fits after a pilot with only two cases?</p>
+<details>
+<summary>View commented response</summary>
+<p>“The candidate deserves a bigger evaluation.” Two cases might reveal a defect, but they don’t support a broad promise of reliability.</p>
+</details>
+</div>
+<div class="read-controls">
+<button aria-pressed="false" data-inema-read-toggle="">
+<span aria-hidden="true">✓</span>
+<span data-inema-read-label="">Mark as read</span>
+</button>
+<button aria-pressed="false" data-inema-doubt-toggle="">I have a question</button>
+</div>
+</section>
+<section class="quiz" data-inema-check="q-4-1">
+<span class="eyebrow">CHECK WITHOUT BLOCKING</span>
+<h2>Check your understanding</h2>
+<p>Which number helps more to choose an economical configuration?</p>
+<div class="quiz-options">
+<button data-inema-check-option="0">Isolated nominal price.</button>
+<button data-inema-check-option="1">Total cost divided by accepted deliveries, with minimum quality met.</button>
+<button data-inema-check-option="2">Time of the single fastest run.</button>
+</div>
+<div aria-live="polite" data-inema-check-feedback="" role="status">
+</div>
+</section>
+<section class="module-summary">
+<h2>What you take from this module</h2>
+<p>Plan a fair comparison and compute cost per accepted delivery.</p>
+<ul>
+<li>Establish a reference configuration.</li>
+<li>Compare one variable at a time.</li>
+<li>Choose cases that represent real work.</li>
+<li>Calculate the cost per accepted delivery.</li>
+<li>Reduce effort with a quality gate.</li>
+<li>Record a decision that can be reviewed.</li>
+</ul>
+<p>Next action: save the exercise in your learning lab and record what still needs review.</p>
+</section>
+<div class="actions">
+<a class="btn" href="index.html">← Learning track map</a>
+<a class="btn cta" href="../trilha4/modulo-4-2.html">Next: Evolve and deliver your first skill →</a>
+</div>
+</article>
+</div>
+<p class="muted">Module reference: the provided transcript and <a href="../../index.html#fontes">course sources and technical notes</a>.</p>
+</main>
+<footer>
+<div class="wrap">Agent Skills · INEMA.CLUB · v1.1.0 · Course in Portuguese<br/>Original educational material based on the indicated reference. Progress saved in this browser; export a copy to My learning journey.<br/>
+<a href="../../index.html#fontes">References and editorial criteria</a> · <a download="" href="../../materiais/kit-agent-skills.zip">Download practice kit</a>
+</div>
+</footer>
+<dialog aria-label="Read the module" id="module-modal">
+<button data-close-modal="">Close module</button>
+<iframe title="Full module content">
+</iframe>
+</dialog>
+<script id="quiz-data" type="application/json">{"id": "q-4-1", "q": "Which number helps more to choose an economical configuration?", "options": ["Isolated nominal price.", "Total cost divided by accepted deliveries, with minimum quality met.", "Time of the single fastest run."], "answer": "1", "explain": {"0": "Repetitions and corrections also cost. The configuration only competes after meeting the quality criteria.", "1": "Repetitions and corrections also cost. The configuration only competes after meeting the quality criteria.", "2": "Repetitions and corrections also cost. The configuration only competes after meeting the quality criteria."}}</script>
+<script src="../../assets/learn.js">
+</script>
+<script src="../../assets/course.js">
+</script>
+<nav aria-label="Course language" data-course-languages=""><a href="../../../curso/trilha4/modulo-4-1.html" hreflang="pt-BR" lang="pt-BR">Português</a><a aria-current="page" href="modulo-4-1.html" hreflang="en" lang="en">English</a><a href="../../../es/curso/trilha4/modulo-4-1.html" hreflang="es" lang="es">Español</a></nav><script data-course-language-hash="">document.querySelectorAll('[data-course-languages] a').forEach(function(a){a.addEventListener('click',function(){a.href=a.getAttribute('href').split('#')[0]+location.hash;});});</script></body>
+</html>

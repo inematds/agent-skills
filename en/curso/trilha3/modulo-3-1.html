@@ -1,0 +1,947 @@
+<!DOCTYPE html>
+<html class="dark" lang="en">
+<head>
+<script>
+(function () {
+  try {
+    var html = document.documentElement;
+    var DEF = { theme: 'inema-dark', font: 'inter', fontScale: 100, lineWidth: 68, leading: 1.7, accent: 'emerald' };
+    function clone(o) { var r = {}; for (var x in o) r[x] = o[x]; return r; }
+    var p = clone(DEF);
+    try {
+      var raw = localStorage.getItem('inema.prefs');
+      if (raw) {
+        var parsed = JSON.parse(raw);
+        if (parsed && typeof parsed === 'object') {
+          for (var k in DEF) if (parsed[k] != null) p[k] = parsed[k];
+        }
+      } else {
+        // fallback ao tema legado do v1
+        var legacy = localStorage.getItem('theme');
+        if (legacy === 'light') p.theme = 'claro';
+        else if (legacy === 'dark') p.theme = 'inema-dark';
+      }
+    } catch (e) { p = clone(DEF); }
+
+    // mapa tema -> (.dark on/off, data-theme, color-scheme)
+    var THEMES = {
+      'inema-dark': { dark: true,  attr: null,        cs: 'dark'  },
+      'claro':      { dark: false, attr: null,        cs: 'light' },
+      'sepia':      { dark: false, attr: 'sepia',     cs: 'light' },
+      'foco':       { dark: null,  attr: 'foco',      cs: null    },  // herda eixo atual
+      'contraste':  { dark: true,  attr: 'contraste', cs: 'dark'  }
+    };
+    var t = THEMES[p.theme] || THEMES['inema-dark'];
+
+    if (t.dark === true) html.classList.add('dark');
+    else if (t.dark === false) html.classList.remove('dark');
+    // 'foco' (null) preserva o que ja houver no atributo class do <html>
+
+    if (t.attr) html.setAttribute('data-theme', t.attr);
+    else html.removeAttribute('data-theme');
+
+    html.style.colorScheme = (t.cs ? t.cs : (html.classList.contains('dark') ? 'dark' : 'light'));
+
+    html.setAttribute('data-font', p.font || 'inter');
+    html.setAttribute('data-accent', p.accent || 'emerald');
+
+    // variaveis de leitura (espelham learn.js / learn.css) ANTES do paint
+    var s = html.style;
+    var scale = (+p.fontScale || 100);
+    s.setProperty('--inema-font-scale', (scale / 100).toString());
+    s.setProperty('font-size', scale + '%');               // :root em %, nunca px
+    s.setProperty('--measure', (+p.lineWidth || 68) + 'ch');
+    s.setProperty('--lh-body', (+p.leading || 1.7).toString());
+    var fam = p.font === 'system'
+      ? 'system-ui, -apple-system, "Segoe UI", Roboto, sans-serif'
+      : (p.font === 'leitura'
+        ? '"Atkinson Hyperlegible", "Inter", system-ui, sans-serif'
+        : '"Inter", system-ui, sans-serif');
+    s.setProperty('--font-body', fam);
+
+    var ACC = {
+      emerald: [152, 76, 45], blue: [217, 91, 60], purple: [258, 90, 66],
+      amber: [38, 92, 50], teal: [174, 72, 41], rose: [350, 89, 60]
+    };
+    var a = ACC[p.accent] || ACC.emerald;
+    s.setProperty('--accent-h', a[0] + '');
+    s.setProperty('--accent-s', a[1] + '%');
+    s.setProperty('--accent-l', a[2] + '%');
+    s.setProperty('--accent', 'hsl(' + a[0] + ' ' + a[1] + '% ' + a[2] + '%)');
+  } catch (err) {
+    // qualquer falha => default dark, preserva a marca
+    try { document.documentElement.classList.add('dark'); document.documentElement.style.colorScheme = 'dark'; } catch (e) {}
+  }
+})();
+</script>
+<meta charset="utf-8"/>
+<meta content="width=device-width, initial-scale=1" name="viewport"/>
+<title>Verify with evidence | Agent Skills · INEMA</title>
+<meta content="Full Codex skills course: reverse engineering, triggers, freedom, verification, cost, and continuous improvement. INEMA v2 format." name="description"/>
+<meta content="agent-skills-codex-en" name="inema-course"/>
+<meta content="../../" name="course-root"/>
+<script data-inema-manifest="" type="application/json">{"course": "agent-skills-codex-en", "tracks": [{"n": "1", "title": "Foundations", "modules": [{"id": "1-1", "title": "Understand what a skill teaches", "topics": 6, "href": "curso/trilha1/modulo-1-1.html"}, {"id": "1-2", "title": "Start with the approved result", "topics": 6, "href": "curso/trilha1/modulo-1-2.html"}]}, {"n": "2", "title": "Construction", "modules": [{"id": "2-1", "title": "Build a skill with a clear job", "topics": 6, "href": "curso/trilha2/modulo-2-1.html"}, {"id": "2-2", "title": "Calibrate the agent’s freedom", "topics": 6, "href": "curso/trilha2/modulo-2-2.html"}]}, {"n": "3", "title": "Verification", "modules": [{"id": "3-1", "title": "Verify with evidence", "topics": 6, "href": "curso/trilha3/modulo-3-1.html"}, {"id": "3-2", "title": "Do a real visual review", "topics": 6, "href": "curso/trilha3/modulo-3-2.html"}]}, {"n": "4", "title": "Evolution", "modules": [{"id": "4-1", "title": "Compare quality, cost, and effort", "topics": 6, "href": "curso/trilha4/modulo-4-1.html"}, {"id": "4-2", "title": "Evolve and deliver your first skill", "topics": 6, "href": "curso/trilha4/modulo-4-2.html"}]}]}</script>
+<link href="../../assets/favicon.svg" rel="icon" type="image/svg+xml"/>
+<link href="../../assets/course.css" rel="stylesheet"/>
+<link href="../../assets/learn.css" rel="stylesheet"/>
+<link href="../../assets/patches.css" rel="stylesheet"/>
+<link href="https://inematds.github.io/agent-skills/curso/trilha3/modulo-3-1.html" hreflang="pt-BR" rel="alternate"/><link href="https://inematds.github.io/agent-skills/en/curso/trilha3/modulo-3-1.html" hreflang="en" rel="alternate"/><link href="https://inematds.github.io/agent-skills/es/curso/trilha3/modulo-3-1.html" hreflang="es" rel="alternate"/><link href="https://inematds.github.io/agent-skills/curso/trilha3/modulo-3-1.html" hreflang="x-default" rel="alternate"/><link href="https://inematds.github.io/agent-skills/en/curso/trilha3/modulo-3-1.html" rel="canonical"/><style id="course-language-css">[data-course-languages]{position:fixed;bottom:0;left:0;right:0;z-index:60;display:flex;gap:1.25rem;padding:.65rem;justify-content:center;background:#111827;color:#f3f4f6}[data-course-languages] a{color:inherit;font:14px system-ui}[data-course-languages] [aria-current]{font-weight:bold;text-decoration:underline}[data-course-languages] a:focus-visible{outline:2px solid #38bdf8;outline-offset:4px}body{padding-bottom:75px}</style></head>
+<body class="track-3">
+<a class="skip" href="#conteudo">Jump to content</a>
+<nav aria-label="Main navigation" class="site-nav">
+<div class="wrap nav-row">
+<a aria-label="Agent Skills, start" class="brand" href="../../index.html">
+<svg aria-hidden="true" fill="none" viewbox="0 0 32 32">
+<path d="m11 7-8 9 8 9M21 7l8 9-8 9M18 4l-4 24" stroke="currentColor" stroke-width="2.5"></path>
+</svg>
+<span class="brand-name">AGENT SKILLS</span>
+</a>
+<a class="text-sky-400" href="https://inema.club" rel="noopener" target="_blank">INEMA.CLUB</a>
+<div class="nav-links">
+<a class="" href="../../curso/trilha1/index.html">
+<span class="nav-full">Foundations</span>
+<span class="nav-short">T1</span>
+</a>
+<a class="" href="../../curso/trilha2/index.html">
+<span class="nav-full">Construction</span>
+<span class="nav-short">T2</span>
+</a>
+<a aria-current="page" class="active" href="../../curso/trilha3/index.html">
+<span class="nav-full">Verification</span>
+<span class="nav-short">T3</span>
+</a>
+<a class="" href="../../curso/trilha4/index.html">
+<span class="nav-full">Evolution</span>
+<span class="nav-short">T4</span>
+</a>
+</div>
+<button aria-label="Toggle light and dark theme" class="theme-toggle" id="theme-toggle">
+<svg aria-hidden="true" fill="none" viewbox="0 0 24 24">
+<circle cx="12" cy="12" r="4" stroke="currentColor" stroke-width="1.6"></circle>
+<path d="M12 1v3m0 16v3M1 12h3m16 0h3M4 4l2 2m12 12 2 2M4 20l2-2M18 6l2-2" stroke="currentColor" stroke-width="1.6"></path>
+</svg>
+</button>
+</div>
+</nav>
+<div class="wrap studybar">
+<div class="tools">
+<button data-inema-journey-open="">My learning journey</button>
+<button data-course-resume="">Continue reading</button>
+<div class="appearance-wrap">
+<button aria-controls="appearance" aria-expanded="false" data-inema-appearance-toggle="#appearance">Appearance</button>
+<div class="inema-appearance-pop" data-inema-appearance="" data-open="false" id="appearance">
+<h3>Theme</h3>
+<div class="inema-segment">
+<button aria-pressed="false" data-inema-set-theme="inema-dark">Dark</button>
+<button aria-pressed="false" data-inema-set-theme="claro">Light</button>
+<button aria-pressed="false" data-inema-set-theme="sepia">Sepia</button>
+<button aria-pressed="false" data-inema-set-theme="foco">Focus</button>
+<button aria-pressed="false" data-inema-set-theme="contraste">High contrast</button>
+</div>
+<h3>Font</h3>
+<div class="inema-segment">
+<button aria-pressed="false" data-inema-set-font="inter">Inter / system</button>
+<button aria-pressed="false" data-inema-set-font="system">System</button>
+<button aria-pressed="false" data-inema-set-font="leitura">Reading</button>
+</div>
+<h3>Size</h3>
+<div class="inema-segment">
+<button aria-pressed="false" data-inema-set-fontscale="100">100%</button>
+<button aria-pressed="false" data-inema-set-fontscale="112">112%</button>
+<button aria-pressed="false" data-inema-set-fontscale="125">125%</button>
+</div>
+<h3>Text width</h3>
+<div class="inema-segment">
+<button aria-pressed="false" data-inema-set-linewidth="60">Narrow</button>
+<button aria-pressed="false" data-inema-set-linewidth="68">Medium</button>
+<button aria-pressed="false" data-inema-set-linewidth="75">Wide</button>
+</div>
+<h3>Line spacing</h3>
+<div class="inema-segment">
+<button aria-pressed="false" data-inema-set-leading="1.45">Compact</button>
+<button aria-pressed="false" data-inema-set-leading="1.7">Comfortable</button>
+</div>
+<h3>Controls accent</h3>
+<div class="inema-segment">
+<button aria-pressed="false" data-inema-set-accent="emerald">Green</button>
+<button aria-pressed="false" data-inema-set-accent="blue">Blue</button>
+<button aria-pressed="false" data-inema-set-accent="purple">Purple</button>
+<button aria-pressed="false" data-inema-set-accent="amber">Amber</button>
+<button aria-pressed="false" data-inema-set-accent="teal">Turquoise</button>
+<button aria-pressed="false" data-inema-set-accent="rose">Pink</button>
+</div>
+</div>
+</div>
+</div>
+<div aria-label="Reading progress" aria-valuemax="100" aria-valuemin="0" aria-valuenow="0" class="meter" data-inema-meter="curso" role="progressbar">
+<div class="meter-top">
+<span data-inema-meter-frac="">0 of 0</span>
+<span data-inema-meter-pct="">0%</span>
+</div>
+<div class="inema-bar">
+<div data-inema-meter-fill="">
+</div>
+</div>
+</div>
+</div>
+<noscript>
+<p class="wrap no-script">You can read all the lessons without JavaScript. Progress, grades, and appearance controls require JavaScript.</p>
+</noscript>
+<main class="wrap" id="conteudo">
+<div class="breadcrumb">
+<a href="../../index.html">Start</a> / <a href="index.html">Verification</a> / Module 3.1</div>
+<header class="hero">
+<span class="pill">MODULE 3.1</span>
+<h1>Verify with evidence</h1>
+<p class="lead">Build objective tests and rubrics that explain the editorial evaluation.</p>
+<p>
+<strong>At the end:</strong> Write a rubric and a traceable QA report.</p>
+</header>
+<div class="stats">
+<div class="stat">
+<strong>6</strong>
+<span>topics</span>
+</div>
+<div class="stat">
+<strong>60 min</strong>
+<span>estimated with hands-on practice</span>
+</div>
+<div class="stat">
+<strong>6</strong>
+<span>commented exercises</span>
+</div>
+<div class="stat">
+<strong>1</strong>
+<span>final check</span>
+</div>
+</div>
+<div class="reading-layout">
+<aside aria-label="Module index" class="toc" data-inema-toc="">
+<h2>In this module</h2>
+<span data-inema-section-counter="">Section 1 of 6</span>
+<ol>
+<li>
+<a href="#topico-1">1. Separate objective checks from judgment</a>
+</li>
+<li>
+<a href="#topico-2">2. Build tests that can fail</a>
+</li>
+<li>
+<a href="#topico-3">3. Write an editorial rubric with anchors</a>
+</li>
+<li>
+<a href="#topico-4">4. Use a reviewer without outsourcing the truth</a>
+</li>
+<li>
+<a href="#topico-5">5. Produce a useful QA report</a>
+</li>
+<li>
+<a href="#topico-6">6. Close the review cycle with a limit</a>
+</li>
+</ol>
+<div aria-label="Reading progress" aria-valuemax="100" aria-valuemin="0" aria-valuenow="0" class="meter" data-inema-meter="modulo:3-1" role="progressbar">
+<div class="meter-top">
+<span data-inema-meter-frac="">0 of 0</span>
+<span data-inema-meter-pct="">0%</span>
+</div>
+<div class="inema-bar">
+<div data-inema-meter-fill="">
+</div>
+</div>
+</div>
+<p class="muted">Select a portion of the explanations to highlight or annotate.</p>
+</aside>
+<article class="lesson-content" data-inema-module="3-1" data-inema-track="3">
+<section class="lesson" data-inema-topic="modulo-3-1#topico-1" id="topico-1">
+<div class="lesson-head">
+<span class="circle">1</span>
+<h2>Separate objective checks from judgment</h2>
+</div>
+<figure class="diagram">
+<div aria-label="Diagram with horizontal scrolling on small screens" class="diagram-scroll" role="region" tabindex="0">
+<svg aria-label="Requirement → Objective rule → Editorial rubric → Documented decision" class="w-full h-auto" role="img" viewbox="0 0 720 200">
+<defs>
+<pattern height="24" id="d3-1-1-grid" patternunits="userSpaceOnUse" width="24">
+<circle cx="2" cy="2" fill="#c084fc" opacity=".13" r="1"></circle>
+</pattern>
+<filter id="d3-1-1-glow">
+<fegaussianblur result="b" stddeviation="1.8"></fegaussianblur>
+<femerge>
+<femergenode in="b"></femergenode>
+<femergenode in="SourceGraphic"></femergenode>
+</femerge>
+</filter>
+<marker id="d3-1-1-arrow" markerheight="7" markerwidth="7" orient="auto" refx="6" refy="3.5">
+<path d="M0 0 7 3.5 0 7" fill="#c084fc"></path>
+</marker>
+</defs>
+<rect fill="#0f172a" height="200" width="720"></rect>
+<rect fill="url(#d3-1-1-grid)" height="200" width="720"></rect>
+<path d="M225 100 C310 100 315 34 365 34" fill="none" marker-end="url(#d3-1-1-arrow)" opacity=".6" stroke="#c084fc" stroke-width="1.8"></path>
+<path d="M225 100 C310 100 315 100 365 100" fill="none" marker-end="url(#d3-1-1-arrow)" opacity=".6" stroke="#c084fc" stroke-width="1.8"></path>
+<path d="M225 100 C310 100 315 166 365 166" fill="none" marker-end="url(#d3-1-1-arrow)" opacity=".6" stroke="#c084fc" stroke-width="1.8"></path>
+<g>
+<rect fill="#111827" filter="url(#d3-1-1-glow)" height="70" rx="10" stroke="#c084fc" stroke-width="2" width="205" x="20" y="65"></rect>
+<text fill="#e5e7eb" font-size="14" font-weight="600" text-anchor="middle" x="122.5" y="105.0">Requirement</text>
+</g>
+<g>
+<rect fill="#111827" height="48" rx="10" stroke="#38bdf8" stroke-width="2" width="325" x="370" y="10"></rect>
+<text fill="#e5e7eb" font-size="14" font-weight="600" text-anchor="middle" x="532.5" y="39.0">Objective rule</text>
+</g>
+<g>
+<rect fill="#111827" height="48" rx="10" stroke="#38bdf8" stroke-width="2" width="325" x="370" y="76"></rect>
+<text fill="#e5e7eb" font-size="14" font-weight="600" text-anchor="middle" x="532.5" y="105.0">Editorial rubric</text>
+</g>
+<g>
+<rect fill="#111827" height="48" rx="10" stroke="#38bdf8" stroke-width="2" width="325" x="370" y="142"></rect>
+<text fill="#e5e7eb" font-size="14" font-weight="600" text-anchor="middle" x="532.5" y="171.0">Documented decision</text>
+</g>
+</svg>
+</div>
+<figcaption>Both review approaches complement each other; neither should be reduced to “looks good”.</figcaption>
+</figure>
+<div class="inema-prose">
+<h3>What it is</h3>
+<p data-inema-block="m3-1-t1-p1" id="m3-1-t1-p1">An objective check has a reproducible rule: the file exists, the sum reconciles, and the required field is present. An editorial assessment compares the output against a rubric: clarity, relevance, and suitability for the audience. The same requirement can combine both.</p>
+<h3>Why learn</h3>
+<p data-inema-block="m3-1-t1-p2" id="m3-1-t1-p2">The video uses review as the central step. To apply it well, avoid confusing “another agent looked at it” with factual proof. Image counts are verifiable; for an image to truly explain an idea requires interpretation and localized evidence.</p>
+<h3>Key concepts</h3>
+</div>
+<div class="key-grid">
+<div class="key">
+<strong>Goal</strong>observable rule and outcome.</div>
+<div class="key">
+<strong>Editorial</strong>criteria and anchored examples.</div>
+<div class="key">
+<strong>Hybrid</strong>measure plus inspection.</div>
+<div class="key">
+<strong>Evidence</strong>file, excerpt, screenshot, or test.</div>
+</div>
+<div class="code-box">
+<div class="code-head">
+<span>COMMENTED EXAMPLE · 3.1.1</span>
+<button data-copy="code-3-1-1">Copy example</button>
+</div>
+<pre id="code-3-1-1">
+<code>Objective: 4 records and total 500.00.
+Editorial: the summary lets you understand the main finding.
+Hybrid: the table includes all channels and is readable on a cell phone.</code>
+</pre>
+</div>
+<div class="comparison">
+<div class="compare-good">
+<h3>✓ Do it like this</h3>
+<p>Match each item to a concrete piece of evidence.</p>
+</div>
+<div class="compare-bad">
+<h3>✗ Avoid this mistake</h3>
+<p>Classify all visual review as subjective; overflow is measurable.</p>
+</div>
+</div>
+<aside class="tip">
+<strong>Bring it to your skill.</strong> The two forms of review complement each other; neither should be reduced to “it looks good.” Use this principle to review the example before moving on.</aside>
+<div class="practice">
+<h3>Practice before revealing</h3>
+<p>“The image has 1200 pixels of width” proves that it’s appropriate?</p>
+<details>
+<summary>View commented response</summary>
+<p>No. It’s an objective property, but it doesn’t show relevance or readability of the content. You still need to assess the crop and the context.</p>
+</details>
+</div>
+<div class="read-controls">
+<button aria-pressed="false" data-inema-read-toggle="">
+<span aria-hidden="true">✓</span>
+<span data-inema-read-label="">Mark as read</span>
+</button>
+<button aria-pressed="false" data-inema-doubt-toggle="">I have a question</button>
+</div>
+</section>
+<section class="lesson" data-inema-topic="modulo-3-1#topico-2" id="topico-2">
+<div class="lesson-head">
+<span class="circle">2</span>
+<h2>Build tests that can fail</h2>
+</div>
+<figure class="diagram">
+<div aria-label="Diagram with horizontal scrolling on small screens" class="diagram-scroll" role="region" tabindex="0">
+<svg aria-label="Known input → Execution → Compare with the oracle → Pass or fail" class="w-full h-auto" role="img" viewbox="0 0 720 200">
+<defs>
+<pattern height="24" id="d3-1-2-grid" patternunits="userSpaceOnUse" width="24">
+<circle cx="2" cy="2" fill="#c084fc" opacity=".13" r="1"></circle>
+</pattern>
+<filter id="d3-1-2-glow">
+<fegaussianblur result="b" stddeviation="1.8"></fegaussianblur>
+<femerge>
+<femergenode in="b"></femergenode>
+<femergenode in="SourceGraphic"></femergenode>
+</femerge>
+</filter>
+<marker id="d3-1-2-arrow" markerheight="7" markerwidth="7" orient="auto" refx="6" refy="3.5">
+<path d="M0 0 7 3.5 0 7" fill="#c084fc"></path>
+</marker>
+</defs>
+<rect fill="#0f172a" height="200" width="720"></rect>
+<rect fill="url(#d3-1-2-grid)" height="200" width="720"></rect>
+<path d="M175 100 H193" fill="none" marker-end="url(#d3-1-2-arrow)" opacity=".6" stroke="#c084fc" stroke-width="1.8"></path>
+<g>
+<rect fill="#111827" filter="url(#d3-1-2-glow)" height="74" rx="10" stroke="#c084fc" stroke-width="2" width="150" x="20" y="63"></rect>
+<text fill="#e5e7eb" font-size="14" font-weight="600" text-anchor="middle" x="95.0" y="105.0">Known input</text>
+</g>
+<path d="M350 100 H368" fill="none" marker-end="url(#d3-1-2-arrow)" opacity=".6" stroke="#c084fc" stroke-width="1.8"></path>
+<g>
+<rect fill="#111827" height="74" rx="10" stroke="#38bdf8" stroke-width="2" width="150" x="195" y="63"></rect>
+<text fill="#e5e7eb" font-size="14" font-weight="600" text-anchor="middle" x="270.0" y="105.0">Execution</text>
+</g>
+<path d="M525 100 H543" fill="none" marker-end="url(#d3-1-2-arrow)" opacity=".6" stroke="#c084fc" stroke-width="1.8"></path>
+<g>
+<rect fill="#111827" height="74" rx="10" stroke="#38bdf8" stroke-width="2" width="150" x="370" y="63"></rect>
+<text fill="#e5e7eb" font-size="14" font-weight="600" text-anchor="middle" x="445.0" y="105.0">Compare with oracle</text>
+</g>
+<g>
+<rect fill="#111827" height="74" rx="10" stroke="#38bdf8" stroke-width="2" width="150" x="545" y="63"></rect>
+<text fill="#e5e7eb" font-size="14" font-weight="600" text-anchor="middle" x="620.0" y="105.0">Pass or fail</text>
+</g>
+</svg>
+</div>
+<figcaption>The answer key should not be just a copy of the output that the program produced.</figcaption>
+</figure>
+<div class="inema-prose">
+<h3>What it is</h3>
+<p data-inema-block="m3-1-t2-p1" id="m3-1-t2-p1">A useful test should fail in the face of a plausible error. If it only checks that the file exists, an empty report will pass. In the example, compare the total, the channels, the number of records, and the behavior for invalid input.</p>
+<h3>Why learn</h3>
+<p data-inema-block="m3-1-t2-p2" id="m3-1-t2-p2">Tests derived blindly from the implementation can repeat the same error. Use at least one result computed by another path: manually in a small case, or by an independent rule. Also verify outputs that should not be produced.</p>
+<h3>Key concepts</h3>
+</div>
+<div class="key-grid">
+<div class="key">
+<strong>Assertion</strong>expected condition.</div>
+<div class="key">
+<strong>Oracle</strong>source of the correct result.</div>
+<div class="key">
+<strong>Negative test</strong>handled error.</div>
+<div class="key">
+<strong>Independence</strong>reduce shared error.</div>
+</div>
+<div class="code-box">
+<div class="code-head">
+<span>COMMENTED EXAMPLE · 3.1.2</span>
+<button data-copy="code-3-1-2">Copy example</button>
+</div>
+<pre id="code-3-1-2">
+<code>assert total == "500.00"
+assert canais == {"Loja": "320.00", "Site": "180.00"}
+assert registros == 4
+# Input without a column: output code != 0
+# And no relatorio.md new item should appear.</code>
+</pre>
+</div>
+<div class="timeline">
+<h3>From concept to action</h3>
+<ol>
+<li>Known input: identify the initial condition.</li>
+<li>Execution: apply the described decision.</li>
+<li>Compare with oracle: check the effect in the example.</li>
+<li>Pass or fail: record the output evidence.</li>
+</ol>
+</div>
+<div class="comparison">
+<div class="compare-good">
+<h3>✓ Do it like this</h3>
+<p>Introduce an error on purpose to verify that the test flags it.</p>
+</div>
+<div class="compare-bad">
+<h3>✗ Avoid this mistake</h3>
+<p>Use “the script ran” as the only quality criterion.</p>
+</div>
+</div>
+<div class="practice">
+<h3>Practice before revealing</h3>
+<p>If the per-channel totals add up to 490 and the overall total shows 500, what went wrong?</p>
+<details>
+<summary>View commented response</summary>
+<p>Reconciliation. Even if each field is present, the numbers are not consistent. The output must be corrected before it’s accepted.</p>
+</details>
+</div>
+<div class="read-controls">
+<button aria-pressed="false" data-inema-read-toggle="">
+<span aria-hidden="true">✓</span>
+<span data-inema-read-label="">Mark as read</span>
+</button>
+<button aria-pressed="false" data-inema-doubt-toggle="">I have a question</button>
+</div>
+</section>
+<section class="lesson" data-inema-topic="modulo-3-1#topico-3" id="topico-3">
+<div class="lesson-head">
+<span class="circle">3</span>
+<h2>Write an editorial rubric with anchors</h2>
+</div>
+<figure class="diagram">
+<div aria-label="Diagram with horizontal scrolling on small screens" class="diagram-scroll" role="region" tabindex="0">
+<svg aria-label="Criterion → Quality anchor → Observed excerpt → Specific correction" class="w-full h-auto" role="img" viewbox="0 0 720 200">
+<defs>
+<pattern height="24" id="d3-1-3-grid" patternunits="userSpaceOnUse" width="24">
+<circle cx="2" cy="2" fill="#c084fc" opacity=".13" r="1"></circle>
+</pattern>
+<filter id="d3-1-3-glow">
+<fegaussianblur result="b" stddeviation="1.8"></fegaussianblur>
+<femerge>
+<femergenode in="b"></femergenode>
+<femergenode in="SourceGraphic"></femergenode>
+</femerge>
+</filter>
+<marker id="d3-1-3-arrow" markerheight="7" markerwidth="7" orient="auto" refx="6" refy="3.5">
+<path d="M0 0 7 3.5 0 7" fill="#c084fc"></path>
+</marker>
+</defs>
+<rect fill="#0f172a" height="200" width="720"></rect>
+<rect fill="url(#d3-1-3-grid)" height="200" width="720"></rect>
+<path d="M170 137 H182 V110 H192" fill="none" marker-end="url(#d3-1-3-arrow)" opacity=".6" stroke="#c084fc" stroke-width="1.8"></path>
+<g>
+<rect fill="#111827" filter="url(#d3-1-3-glow)" height="62" rx="10" stroke="#c084fc" stroke-width="2" width="150" x="20" y="105"></rect>
+<text fill="#e5e7eb" font-size="14" font-weight="600" text-anchor="middle" x="95.0" y="141.0">Criterion</text>
+</g>
+<path d="M345 110 H357 V83 H367" fill="none" marker-end="url(#d3-1-3-arrow)" opacity=".6" stroke="#c084fc" stroke-width="1.8"></path>
+<g>
+<rect fill="#111827" height="62" rx="10" stroke="#38bdf8" stroke-width="2" width="150" x="195" y="78"></rect>
+<text fill="#e5e7eb" font-size="14" font-weight="600" text-anchor="middle" x="270.0" y="114.0">Quality anchor</text>
+</g>
+<path d="M520 83 H532 V56 H542" fill="none" marker-end="url(#d3-1-3-arrow)" opacity=".6" stroke="#c084fc" stroke-width="1.8"></path>
+<g>
+<rect fill="#111827" height="62" rx="10" stroke="#38bdf8" stroke-width="2" width="150" x="370" y="51"></rect>
+<text fill="#e5e7eb" font-size="14" font-weight="600" text-anchor="middle" x="445.0" y="87.0">Observed excerpt</text>
+</g>
+<g>
+<rect fill="#111827" height="62" rx="10" stroke="#38bdf8" stroke-width="2" width="150" x="545" y="24"></rect>
+<text fill="#e5e7eb" font-size="14" font-weight="600" text-anchor="middle" x="620.0" y="60.0">Specific correction</text>
+</g>
+</svg>
+</div>
+<figcaption>The score organizes the evaluation; the justification explains why it exists.</figcaption>
+</figure>
+<div class="inema-prose">
+<h3>What it is</h3>
+<p data-inema-block="m3-1-t3-p1" id="m3-1-t3-p1">A rubric explains what each quality level means. Use a few criteria and concrete descriptions. For clarity, for example: level 0 is contradictory, 1 requires guessing, 2 is understandable with review, and 3 is straightforward and self-sufficient.</p>
+<h3>Why learn</h3>
+<p data-inema-block="m3-1-t3-p2" id="m3-1-t3-p2">Without anchors, two reviewers can use the same word for different standards. An isolated high score doesn’t help you fix anything. Require the evaluation to cite the excerpt and propose the smallest change that can resolve the problem.</p>
+<h3>Key concepts</h3>
+</div>
+<div class="key-grid">
+<div class="key">
+<strong>Criterion</strong>evaluated dimension.</div>
+<div class="key">
+<strong>Anchor</strong>example of the level.</div>
+<div class="key">
+<strong>Excerpt</strong>location of the evidence.</div>
+<div class="key">
+<strong>Correction</strong>limited and verifiable action.</div>
+</div>
+<div class="code-box">
+<div class="code-head">
+<span>COMMENTED EXAMPLE · 3.1.3</span>
+<button data-copy="code-3-1-3">Copy example</button>
+</div>
+<pre id="code-3-1-3">
+<code>Image relevance
+0: contradicts the text.
+1: is from the video, but does not illustrate the statement.
+2: illustrates, but needs additional caption.
+3: illustrates with context and clearly legible detail.</code>
+</pre>
+</div>
+<div class="comparison">
+<div class="compare-good">
+<h3>✓ Do it like this</h3>
+<p>Ask for justification per criterion, with an example from the model’s own output.</p>
+</div>
+<div class="compare-bad">
+<h3>✗ Avoid this mistake</h3>
+<p>Ask only for “give a score from 0 to 10”.</p>
+</div>
+</div>
+<div class="practice">
+<h3>Practice before revealing</h3>
+<p>Provide a failure anchor for the criterion “fidelity to the data”.</p>
+<details>
+<summary>View commented response</summary>
+<p>“Any number or cause presented without support in the input is a blocking failure.” Some dimensions should not be compensated by averaging with style.</p>
+</details>
+</div>
+<div class="read-controls">
+<button aria-pressed="false" data-inema-read-toggle="">
+<span aria-hidden="true">✓</span>
+<span data-inema-read-label="">Mark as read</span>
+</button>
+<button aria-pressed="false" data-inema-doubt-toggle="">I have a question</button>
+</div>
+</section>
+<section class="lesson" data-inema-topic="modulo-3-1#topico-4" id="topico-4">
+<div class="lesson-head">
+<span class="circle">4</span>
+<h2>Use an evaluator without outsourcing the truth</h2>
+</div>
+<figure class="diagram">
+<div aria-label="Diagram with horizontal scrolling on small screens" class="diagram-scroll" role="region" tabindex="0">
+<svg aria-label="Contract + data → Candidate output → Evaluator → Evidence + decision" class="w-full h-auto" role="img" viewbox="0 0 720 200">
+<defs>
+<pattern height="24" id="d3-1-4-grid" patternunits="userSpaceOnUse" width="24">
+<circle cx="2" cy="2" fill="#c084fc" opacity=".13" r="1"></circle>
+</pattern>
+<filter id="d3-1-4-glow">
+<fegaussianblur result="b" stddeviation="1.8"></fegaussianblur>
+<femerge>
+<femergenode in="b"></femergenode>
+<femergenode in="SourceGraphic"></femergenode>
+</femerge>
+</filter>
+<marker id="d3-1-4-arrow" markerheight="7" markerwidth="7" orient="auto" refx="6" refy="3.5">
+<path d="M0 0 7 3.5 0 7" fill="#c084fc"></path>
+</marker>
+</defs>
+<rect fill="#0f172a" height="200" width="720"></rect>
+<rect fill="url(#d3-1-4-grid)" height="200" width="720"></rect>
+<path d="M179 65 H192 V91 H197" fill="none" marker-end="url(#d3-1-4-arrow)" opacity=".6" stroke="#c084fc" stroke-width="1.8"></path>
+<g>
+<rect fill="#111827" filter="url(#d3-1-4-glow)" height="72" rx="10" stroke="#c084fc" stroke-width="2" width="150" x="25" y="25"></rect>
+<text fill="#e5e7eb" font-size="14" font-weight="600" text-anchor="middle" x="100.0" y="66.0">Contract + data</text>
+</g>
+<path d="M354 91 H367 V117 H372" fill="none" marker-end="url(#d3-1-4-arrow)" opacity=".6" stroke="#c084fc" stroke-width="1.8"></path>
+<g>
+<rect fill="#111827" height="72" rx="10" stroke="#38bdf8" stroke-width="2" width="150" x="200" y="51"></rect>
+<text fill="#e5e7eb" font-size="14" font-weight="600" text-anchor="middle" x="275.0" y="92.0">Candidate output</text>
+</g>
+<path d="M529 117 H542 V143 H547" fill="none" marker-end="url(#d3-1-4-arrow)" opacity=".6" stroke="#c084fc" stroke-width="1.8"></path>
+<g>
+<rect fill="#111827" height="72" rx="10" stroke="#38bdf8" stroke-width="2" width="150" x="375" y="77"></rect>
+<text fill="#e5e7eb" font-size="14" font-weight="600" text-anchor="middle" x="450.0" y="118.0">Evaluator</text>
+</g>
+<g>
+<rect fill="#111827" height="72" rx="10" stroke="#38bdf8" stroke-width="2" width="150" x="550" y="103"></rect>
+<text fill="#e5e7eb" font-size="14" font-weight="600" text-anchor="middle" x="625.0" y="144.0">Evidence + decision</text>
+</g>
+</svg>
+</div>
+<figcaption>The evaluator must be able to point out a failure, even when the delivery message sounds confident.</figcaption>
+</figure>
+<div class="inema-prose">
+<h3>What it is</h3>
+<p data-inema-block="m3-1-t4-p1" id="m3-1-t4-p1">An LLM as a judge applies criteria and points to possible failures. It can interpret language and images, but it can also miss errors or approve its own hypothesis. A second instance doesn’t guarantee independence of reasoning.</p>
+<h3>Why learn</h3>
+<p data-inema-block="m3-1-t4-p2" id="m3-1-t4-p2">Separate generation from the evaluation and provide the evaluator with the contract, the input, and the output. When possible, hide which configuration produced each version. Check a human sample to calibrate whether the judge is actually using the rubric.</p>
+<h3>Key concepts</h3>
+</div>
+<div class="key-grid">
+<div class="key">
+<strong>Separation</strong>review has its own context and objective.</div>
+<div class="key">
+<strong>Blinding</strong>reduces preference for labeling.</div>
+<div class="key">
+<strong>Calibration</strong>compare with human judgment.</div>
+<div class="key">
+<strong>Limit</strong>the judge does not replace the primary source.</div>
+</div>
+<div class="code-box">
+<div class="code-head">
+<span>COMMENTED EXAMPLE · 3.1.4</span>
+<button data-copy="code-3-1-4">Copy example</button>
+</div>
+<pre id="code-3-1-4">
+<code>Evaluate this output against the provided rubric.
+For each failure, cite the excerpt, the criterion, and the evidence.
+Do not assume the previous QA report is correct.
+If you cannot verify an item, mark it “not verified.”</code>
+</pre>
+</div>
+<div class="comparison">
+<div class="compare-good">
+<h3>✓ Do it like this</h3>
+<p>Ask the judge to look for contradictions and missing information.</p>
+</div>
+<div class="compare-bad">
+<h3>✗ Avoid this mistake</h3>
+<p>Request that the judge “confirm that it’s perfect”.</p>
+</div>
+</div>
+<aside class="tip">
+<strong>Bring it to your skill.</strong> The evaluator needs to be able to point out a flaw, even when the delivery message sounds confident. Use this principle to review the example before moving on.</aside>
+<div class="practice">
+<h3>Practice before revealing</h3>
+<p>How do you reduce the influence of the model name in the comparison?</p>
+<details>
+<summary>View commented response</summary>
+<p>Present versions A and B with alternating order and the same rubric. Keep the mapping to the models separate until the evaluation ends.</p>
+</details>
+</div>
+<div class="read-controls">
+<button aria-pressed="false" data-inema-read-toggle="">
+<span aria-hidden="true">✓</span>
+<span data-inema-read-label="">Mark as read</span>
+</button>
+<button aria-pressed="false" data-inema-doubt-toggle="">I have a question</button>
+</div>
+</section>
+<section class="lesson" data-inema-topic="modulo-3-1#topico-5" id="topico-5">
+<div class="lesson-head">
+<span class="circle">5</span>
+<h2>Produce a useful QA report</h2>
+</div>
+<figure class="diagram">
+<div aria-label="Diagram with horizontal scrolling on small screens" class="diagram-scroll" role="region" tabindex="0">
+<svg aria-label="Criterion → Result → Evidence → Limitation" class="w-full h-auto" role="img" viewbox="0 0 720 200">
+<defs>
+<pattern height="24" id="d3-1-5-grid" patternunits="userSpaceOnUse" width="24">
+<circle cx="2" cy="2" fill="#c084fc" opacity=".13" r="1"></circle>
+</pattern>
+<filter id="d3-1-5-glow">
+<fegaussianblur result="b" stddeviation="1.8"></fegaussianblur>
+<femerge>
+<femergenode in="b"></femergenode>
+<femergenode in="SourceGraphic"></femergenode>
+</femerge>
+</filter>
+<marker id="d3-1-5-arrow" markerheight="7" markerwidth="7" orient="auto" refx="6" refy="3.5">
+<path d="M0 0 7 3.5 0 7" fill="#c084fc"></path>
+</marker>
+</defs>
+<rect fill="#0f172a" height="200" width="720"></rect>
+<rect fill="url(#d3-1-5-grid)" height="200" width="720"></rect>
+<path d="M175 100 H193" fill="none" marker-end="url(#d3-1-5-arrow)" opacity=".6" stroke="#c084fc" stroke-width="1.8"></path>
+<g>
+<rect fill="#111827" filter="url(#d3-1-5-glow)" height="74" rx="10" stroke="#c084fc" stroke-width="2" width="150" x="20" y="63"></rect>
+<text fill="#e5e7eb" font-size="14" font-weight="600" text-anchor="middle" x="95.0" y="105.0">Criterion</text>
+</g>
+<path d="M350 100 H368" fill="none" marker-end="url(#d3-1-5-arrow)" opacity=".6" stroke="#c084fc" stroke-width="1.8"></path>
+<g>
+<rect fill="#111827" height="74" rx="10" stroke="#38bdf8" stroke-width="2" width="150" x="195" y="63"></rect>
+<text fill="#e5e7eb" font-size="14" font-weight="600" text-anchor="middle" x="270.0" y="105.0">Result</text>
+</g>
+<path d="M525 100 H543" fill="none" marker-end="url(#d3-1-5-arrow)" opacity=".6" stroke="#c084fc" stroke-width="1.8"></path>
+<g>
+<rect fill="#111827" height="74" rx="10" stroke="#38bdf8" stroke-width="2" width="150" x="370" y="63"></rect>
+<text fill="#e5e7eb" font-size="14" font-weight="600" text-anchor="middle" x="445.0" y="105.0">Evidence</text>
+</g>
+<g>
+<rect fill="#111827" height="74" rx="10" stroke="#38bdf8" stroke-width="2" width="150" x="545" y="63"></rect>
+<text fill="#e5e7eb" font-size="14" font-weight="600" text-anchor="middle" x="620.0" y="105.0">Limitation</text>
+</g>
+</svg>
+</div>
+<figcaption>An explicit open issue is more useful than an unsupported certainty.</figcaption>
+</figure>
+<div class="inema-prose">
+<h3>What it is</h3>
+<p data-inema-block="m3-1-t5-p1" id="m3-1-t5-p1">A quality report connects criterion, result, and evidence. “Everything verified” doesn’t say what was opened, calculated, or inspected. A good delivery also includes limitations and items that still need a decision.</p>
+<h3>Why learn</h3>
+<p data-inema-block="m3-1-t5-p2" id="m3-1-t5-p2">This document reduces human review work because it directs attention. But QA itself can also be wrong: open samples of the evidence and check whether what was described actually happened.</p>
+<h3>Key concepts</h3>
+</div>
+<div class="key-grid">
+<div class="key">
+<strong>Status</strong>passed, failed, or not verified.</div>
+<div class="key">
+<strong>Evidence</strong>locatable reference.</div>
+<div class="key">
+<strong>Action</strong>correction or open issue.</div>
+<div class="key">
+<strong>Traceability</strong>input and used version.</div>
+</div>
+<div class="code-box">
+<div class="code-head">
+<span>COMMENTED EXAMPLE · 3.1.5</span>
+<button data-copy="code-3-1-5">Copy example</button>
+</div>
+<pre id="code-3-1-5">
+<code>Criterion: total sum
+Status: passed
+Expected: 500.00 | obtained: 500.00
+Evidence: dados/vendas.csv, four lines
+Limitation: there was no reconciliation with an external system.</code>
+</pre>
+</div>
+<div class="timeline">
+<h3>From concept to action</h3>
+<ol>
+<li>Criterion: identify the initial condition.</li>
+<li>Result: apply the described decision.</li>
+<li>Evidence: check the effect in the example.</li>
+<li>Limitation: record the output evidence.</li>
+</ol>
+</div>
+<div class="comparison">
+<div class="compare-good">
+<h3>✓ Do it like this</h3>
+<p>Record the verification command or method.</p>
+</div>
+<div class="compare-bad">
+<h3>✗ Avoid this mistake</h3>
+<p>Say you opened the browser without having used a navigation tool.</p>
+</div>
+</div>
+<div class="practice">
+<h3>Practice before revealing</h3>
+<p>Write the status of a visual review when only HTML was inspected.</p>
+<details>
+<summary>View commented response</summary>
+<p>“Not verified visually; HTML structure inspected, rendering pending.” The report must distinguish what was observed from what was inferred.</p>
+</details>
+</div>
+<div class="read-controls">
+<button aria-pressed="false" data-inema-read-toggle="">
+<span aria-hidden="true">✓</span>
+<span data-inema-read-label="">Mark as read</span>
+</button>
+<button aria-pressed="false" data-inema-doubt-toggle="">I have a question</button>
+</div>
+</section>
+<section class="lesson" data-inema-topic="modulo-3-1#topico-6" id="topico-6">
+<div class="lesson-head">
+<span class="circle">6</span>
+<h2>Close a review cycle with a limit</h2>
+</div>
+<figure class="diagram">
+<div aria-label="Diagram with horizontal scrolling on small screens" class="diagram-scroll" role="region" tabindex="0">
+<svg aria-label="Produce → Verify → Correct → Review" class="w-full h-auto" role="img" viewbox="0 0 720 200">
+<defs>
+<pattern height="24" id="d3-1-6-grid" patternunits="userSpaceOnUse" width="24">
+<circle cx="2" cy="2" fill="#c084fc" opacity=".13" r="1"></circle>
+</pattern>
+<filter id="d3-1-6-glow">
+<fegaussianblur result="b" stddeviation="1.8"></fegaussianblur>
+<femerge>
+<femergenode in="b"></femergenode>
+<femergenode in="SourceGraphic"></femergenode>
+</femerge>
+</filter>
+<marker id="d3-1-6-arrow" markerheight="7" markerwidth="7" orient="auto" refx="6" refy="3.5">
+<path d="M0 0 7 3.5 0 7" fill="#c084fc"></path>
+</marker>
+</defs>
+<rect fill="#0f172a" height="200" width="720"></rect>
+<rect fill="url(#d3-1-6-grid)" height="200" width="720"></rect>
+<path d="M280 54 H414" fill="none" marker-end="url(#d3-1-6-arrow)" opacity=".6" stroke="#c084fc" stroke-width="1.8"></path>
+<path d="M540 87 V110" fill="none" marker-end="url(#d3-1-6-arrow)" opacity=".6" stroke="#c084fc" stroke-width="1.8"></path>
+<path d="M420 148 H287" fill="none" marker-end="url(#d3-1-6-arrow)" opacity=".6" stroke="#c084fc" stroke-width="1.8"></path>
+<path d="M160 116 V92" fill="none" marker-end="url(#d3-1-6-arrow)" opacity=".6" stroke="#c084fc" stroke-width="1.8"></path>
+<g>
+<rect fill="#111827" filter="url(#d3-1-6-glow)" height="64" rx="10" stroke="#c084fc" stroke-width="2" width="240" x="40" y="22"></rect>
+<text fill="#e5e7eb" font-size="14" font-weight="600" text-anchor="middle" x="160.0" y="59.0">Produce</text>
+</g>
+<g>
+<rect fill="#111827" height="64" rx="10" stroke="#38bdf8" stroke-width="2" width="240" x="420" y="22"></rect>
+<text fill="#e5e7eb" font-size="14" font-weight="600" text-anchor="middle" x="540.0" y="59.0">Verify</text>
+</g>
+<g>
+<rect fill="#111827" height="64" rx="10" stroke="#38bdf8" stroke-width="2" width="240" x="420" y="116"></rect>
+<text fill="#e5e7eb" font-size="14" font-weight="600" text-anchor="middle" x="540.0" y="153.0">Correct</text>
+</g>
+<g>
+<rect fill="#111827" height="64" rx="10" stroke="#38bdf8" stroke-width="2" width="240" x="40" y="116"></rect>
+<text fill="#e5e7eb" font-size="14" font-weight="600" text-anchor="middle" x="160.0" y="153.0">Review</text>
+</g>
+</svg>
+</div>
+<figcaption>The back arrow exists, but it’s not infinite: the output can be approval or documented blocking.</figcaption>
+</figure>
+<div class="inema-prose">
+<h3>What it is</h3>
+<p data-inema-block="m3-1-t6-p1" id="m3-1-t6-p1">The cycle is produce, verify, correct, and verify again. Set a cap on attempts and an exit condition. In the lab, use up to two rounds of correction before reporting a persistent block for analysis.</p>
+<h3>Why learn</h3>
+<p data-inema-block="m3-1-t6-p2" id="m3-1-t6-p2">More rounds don’t imply better quality. The agent may alternate between two solutions or spend resources without improving. A cap makes the cost predictable and forces you to explain what’s missing instead of declaring victory from exhaustion.</p>
+<h3>Key concepts</h3>
+</div>
+<div class="key-grid">
+<div class="key">
+<strong>Acceptance</strong>all blockers passed.</div>
+<div class="key">
+<strong>Correction</strong>focus on the observed failure.</div>
+<div class="key">
+<strong>Regression</strong>what worked continues working.</div>
+<div class="key">
+<strong>Stop</strong>limit or external dependency.</div>
+</div>
+<div class="code-box">
+<div class="code-head">
+<span>COMMENTED EXAMPLE · 3.1.6</span>
+<button data-copy="code-3-1-6">Copy example</button>
+</div>
+<pre id="code-3-1-6">
+<code>Round 1: correct total, missing period → fix the header.
+Round 2: check the period and repeat the sum test.
+Did the failure persist? Provide diagnosis and evidence.
+Do not mark it as approved.</code>
+</pre>
+</div>
+<div class="comparison">
+<div class="compare-good">
+<h3>✓ Do it like this</h3>
+<p>Run the check again after the correction.</p>
+</div>
+<div class="compare-bad">
+<h3>✗ Avoid this mistake</h3>
+<p>Edit the output and reuse a prior QA before the change.</p>
+</div>
+</div>
+<div class="practice">
+<h3>Practice before revealing</h3>
+<p>Did the report change after verification? Does the QA still hold?</p>
+<details>
+<summary>View commented response</summary>
+<p>Only for parts proven to be unaffected. The final delivery must be verified in the final state, especially against criteria linked to the change.</p>
+</details>
+</div>
+<div class="read-controls">
+<button aria-pressed="false" data-inema-read-toggle="">
+<span aria-hidden="true">✓</span>
+<span data-inema-read-label="">Mark as read</span>
+</button>
+<button aria-pressed="false" data-inema-doubt-toggle="">I have a question</button>
+</div>
+</section>
+<section class="quiz" data-inema-check="q-3-1">
+<span class="eyebrow">CHECK WITHOUT BLOCKING</span>
+<h2>Check your understanding</h2>
+<p>A second agent says “it’s correct”. Does that prove the facts?</p>
+<div class="quiz-options">
+<button data-inema-check-option="0">Yes, two agents won’t make the same mistake.</button>
+<button data-inema-check-option="1">No; you need to check the sources and the evidence for each criterion.</button>
+<button data-inema-check-option="2">Yes, if the model is more expensive.</button>
+</div>
+<div aria-live="polite" data-inema-check-feedback="" role="status">
+</div>
+</section>
+<section class="module-summary">
+<h2>What you take from this module</h2>
+<p>Write a traceable rubric and QA report.</p>
+<ul>
+<li>Separate objective checks from judgment.</li>
+<li>Build tests that can fail.</li>
+<li>Write an editorial rubric with anchors.</li>
+<li>Use an evaluator without outsourcing the truth.</li>
+<li>Produce a useful QA report.</li>
+<li>Close a review cycle with a limit.</li>
+</ul>
+<p>Next action: save the exercise in your learning lab and record what still needs review.</p>
+</section>
+<div class="actions">
+<a class="btn" href="index.html">← Learning track map</a>
+<a class="btn cta" href="../trilha3/modulo-3-2.html">Next: Do a real visual review →</a>
+</div>
+</article>
+</div>
+<p class="muted">Module reference: the provided transcript and <a href="../../index.html#fontes">course sources and technical notes</a>.</p>
+</main>
+<footer>
+<div class="wrap">Agent Skills · INEMA.CLUB · v1.1.0 · Course in Portuguese<br/>Original educational material based on the indicated reference. Progress saved in this browser; export a copy to My learning journey.<br/>
+<a href="../../index.html#fontes">References and editorial criteria</a> · <a download="" href="../../materiais/kit-agent-skills.zip">Download practice kit</a>
+</div>
+</footer>
+<dialog aria-label="Read the module" id="module-modal">
+<button data-close-modal="">Close module</button>
+<iframe title="Full module content">
+</iframe>
+</dialog>
+<script id="quiz-data" type="application/json">{"id": "q-3-1", "q": "A second agent says “it’s correct”. Does that prove the facts?", "options": ["Yes, two agents won’t make the same mistake.", "No; you need to check the sources and the evidence for each criterion.", "Yes, if the model is more expensive."], "answer": "1", "explain": {"0": "Review can help, but agents can share mistakes. What supports approval is verifiable evidence.", "1": "Review can help, but agents can share mistakes. What supports approval is verifiable evidence.", "2": "Review can help, but agents can share mistakes. What supports approval is verifiable evidence."}}</script>
+<script src="../../assets/learn.js">
+</script>
+<script src="../../assets/course.js">
+</script>
+<nav aria-label="Course language" data-course-languages=""><a href="../../../curso/trilha3/modulo-3-1.html" hreflang="pt-BR" lang="pt-BR">Português</a><a aria-current="page" href="modulo-3-1.html" hreflang="en" lang="en">English</a><a href="../../../es/curso/trilha3/modulo-3-1.html" hreflang="es" lang="es">Español</a></nav><script data-course-language-hash="">document.querySelectorAll('[data-course-languages] a').forEach(function(a){a.addEventListener('click',function(){a.href=a.getAttribute('href').split('#')[0]+location.hash;});});</script></body>
+</html>

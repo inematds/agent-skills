@@ -1,0 +1,17 @@
+'use strict';
+window.toggleTopic=function(button){const panel=document.getElementById(button.getAttribute('aria-controls'));const open=button.getAttribute('aria-expanded')!=='true';button.closest('.module-card').querySelectorAll('.topic-toggle').forEach(b=>{b.setAttribute('aria-expanded','false');document.getElementById(b.getAttribute('aria-controls')).classList.remove('active');});panel.classList.toggle('active',open);button.setAttribute('aria-expanded',String(open));};
+function startCourse(){
+ if(!window.INEMA)return;
+ const q=document.getElementById('quiz-data');if(q){const def=JSON.parse(q.textContent);INEMA.registerCheck(def.id,def);}
+ INEMA.init();document.documentElement.classList.add('js');
+ document.querySelectorAll('[data-course-resume]').forEach(b=>b.addEventListener('click',()=>{if(!INEMA.resume()){const root=new URL(document.querySelector('meta[name=course-root]').content,location.href);location.href=new URL('curso/trilha1/modulo-1-1.html',root).href;}}));
+ document.querySelectorAll('[data-copy]').forEach(b=>b.addEventListener('click',async()=>{const text=document.getElementById(b.dataset.copy).textContent;let ok=false;try{if(navigator.clipboard){await navigator.clipboard.writeText(text);ok=true;}}catch{}if(!ok){const t=document.createElement('textarea');t.value=text;document.body.append(t);t.select();ok=document.execCommand('copy');t.remove();}b.textContent=ok?"Copied":"Select the example to copy it";setTimeout(()=>b.textContent="Copy example",1800);}));
+ const modal=document.getElementById('module-modal');let opener=null;
+ document.querySelectorAll('[data-open-modal]').forEach(b=>b.addEventListener('click',()=>{opener=b;modal.querySelector('iframe').src=b.dataset.openModal;modal.showModal();}));
+ modal.querySelector('[data-close-modal]').addEventListener('click',()=>modal.close());modal.addEventListener('close',()=>{modal.querySelector('iframe').removeAttribute('src');opener?.focus();});
+ document.addEventListener('keydown',e=>{if(e.key==='Escape'){const pop=document.querySelector('[data-inema-appearance]');const trigger=document.querySelector('[data-inema-appearance-toggle]');if(pop?.getAttribute('data-open')==='true'){pop.setAttribute('data-open','false');trigger.setAttribute('aria-expanded','false');trigger.focus();}}});
+ document.addEventListener('click',e=>{const pop=document.querySelector('[data-inema-appearance]');if(pop&&!e.target.closest('[data-inema-appearance]')&&!e.target.closest('[data-inema-appearance-toggle]')){pop.setAttribute('data-open','false');document.querySelector('[data-inema-appearance-toggle]').setAttribute('aria-expanded','false');}});
+ const cost=document.getElementById('cost'),accepted=document.getElementById('accepted');if(cost){const update=()=>{document.getElementById('cost-value').textContent=cost.value;document.getElementById('accepted-value').textContent=accepted.value;document.getElementById('effective').textContent=+accepted.value?((+cost.value/+accepted.value).toLocaleString('en',{minimumFractionDigits:2,maximumFractionDigits:2})+" unit(s) per accepted output"):"No accepted outputs: cost per accepted output is undefined.";};cost.addEventListener('input',update);accepted.addEventListener('input',update);update();}
+ if(location.hash){const target=document.getElementById(decodeURIComponent(location.hash.slice(1)));if(target)setTimeout(()=>target.scrollIntoView({behavior:'auto'}),80);}
+}
+if(document.readyState==='loading')document.addEventListener('DOMContentLoaded',startCourse);else startCourse();

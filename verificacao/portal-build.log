@@ -1,0 +1,54 @@
+▲ Next.js 16.1.6 (webpack)
+
+  Creating an optimized production build ...
+✓ Compiled successfully in 3.1s
+  Running TypeScript ...
+  Collecting page data using 19 workers ...
+  Generating static pages using 19 workers (0/311) ...
+  Generating static pages using 19 workers (77/311) 
+  Generating static pages using 19 workers (155/311) 
+  Generating static pages using 19 workers (233/311) 
+✓ Generating static pages using 19 workers (311/311) in 1300.2ms
+  Finalizing page optimization ...
+  Collecting build traces ...
+
+Route (app)                                                     Revalidate  Expire
+┌ ○ /                                                                   1m      1y
+├ ○ /_not-found
+├ ƒ /api/click
+├ ƒ /api/courses
+├ ƒ /api/knowledge
+├ ƒ /api/projects
+├ ○ /api/repos                                                         10m      1y
+├ ○ /api/repos-updates                                                 30m      1y
+├ ƒ /api/trails
+├ ƒ /api/updates
+├ ƒ /api/visit
+├ ƒ /api/webmcp-origin-trial
+├ ● /conhecimento/[slug]
+│ ├ /conhecimento/o-que-e-webmcp
+│ ├ /conhecimento/diferenca-entre-mcp-e-webmcp
+│ ├ /conhecimento/como-preparar-um-site-para-agentes-de-ia
+│ └ [+4 more paths]
+├ ƒ /courses-sitemap.xml
+├ ○ /cursos
+├ ● /cursos/[slug]
+│ ├ /cursos/183-10-cara-design-character-design-styles
+│ ├ /cursos/281-agent-skills-crie-skills-verificaveis-no-codex
+│ ├ /cursos/204-agentes-o-novo-office-formacao-por-perfil
+│ └ [+280 more paths]
+├ ○ /en                                                                 1m      1y
+├ ○ /es                                                                 1m      1y
+├ ƒ /feed.xml
+├ ƒ /llms.txt
+├ ○ /robots.txt
+├ ○ /sitemap.xml
+└ ○ /stats                                                              1m      1y
+
+
+ƒ Proxy (Middleware)
+
+○  (Static)   prerendered as static content
+●  (SSG)      prerendered as static HTML (uses generateStaticParams)
+ƒ  (Dynamic)  server-rendered on demand
+

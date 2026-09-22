@@ -1,0 +1,945 @@
+<!DOCTYPE html>
+<html class="dark" lang="en">
+<head>
+<script>
+(function () {
+  try {
+    var html = document.documentElement;
+    var DEF = { theme: 'inema-dark', font: 'inter', fontScale: 100, lineWidth: 68, leading: 1.7, accent: 'emerald' };
+    function clone(o) { var r = {}; for (var x in o) r[x] = o[x]; return r; }
+    var p = clone(DEF);
+    try {
+      var raw = localStorage.getItem('inema.prefs');
+      if (raw) {
+        var parsed = JSON.parse(raw);
+        if (parsed && typeof parsed === 'object') {
+          for (var k in DEF) if (parsed[k] != null) p[k] = parsed[k];
+        }
+      } else {
+        // fallback ao tema legado do v1
+        var legacy = localStorage.getItem('theme');
+        if (legacy === 'light') p.theme = 'claro';
+        else if (legacy === 'dark') p.theme = 'inema-dark';
+      }
+    } catch (e) { p = clone(DEF); }
+
+    // mapa tema -> (.dark on/off, data-theme, color-scheme)
+    var THEMES = {
+      'inema-dark': { dark: true,  attr: null,        cs: 'dark'  },
+      'claro':      { dark: false, attr: null,        cs: 'light' },
+      'sepia':      { dark: false, attr: 'sepia',     cs: 'light' },
+      'foco':       { dark: null,  attr: 'foco',      cs: null    },  // herda eixo atual
+      'contraste':  { dark: true,  attr: 'contraste', cs: 'dark'  }
+    };
+    var t = THEMES[p.theme] || THEMES['inema-dark'];
+
+    if (t.dark === true) html.classList.add('dark');
+    else if (t.dark === false) html.classList.remove('dark');
+    // 'foco' (null) preserva o que ja houver no atributo class do <html>
+
+    if (t.attr) html.setAttribute('data-theme', t.attr);
+    else html.removeAttribute('data-theme');
+
+    html.style.colorScheme = (t.cs ? t.cs : (html.classList.contains('dark') ? 'dark' : 'light'));
+
+    html.setAttribute('data-font', p.font || 'inter');
+    html.setAttribute('data-accent', p.accent || 'emerald');
+
+    // variaveis de leitura (espelham learn.js / learn.css) ANTES do paint
+    var s = html.style;
+    var scale = (+p.fontScale || 100);
+    s.setProperty('--inema-font-scale', (scale / 100).toString());
+    s.setProperty('font-size', scale + '%');               // :root em %, nunca px
+    s.setProperty('--measure', (+p.lineWidth || 68) + 'ch');
+    s.setProperty('--lh-body', (+p.leading || 1.7).toString());
+    var fam = p.font === 'system'
+      ? 'system-ui, -apple-system, "Segoe UI", Roboto, sans-serif'
+      : (p.font === 'leitura'
+        ? '"Atkinson Hyperlegible", "Inter", system-ui, sans-serif'
+        : '"Inter", system-ui, sans-serif');
+    s.setProperty('--font-body', fam);
+
+    var ACC = {
+      emerald: [152, 76, 45], blue: [217, 91, 60], purple: [258, 90, 66],
+      amber: [38, 92, 50], teal: [174, 72, 41], rose: [350, 89, 60]
+    };
+    var a = ACC[p.accent] || ACC.emerald;
+    s.setProperty('--accent-h', a[0] + '');
+    s.setProperty('--accent-s', a[1] + '%');
+    s.setProperty('--accent-l', a[2] + '%');
+    s.setProperty('--accent', 'hsl(' + a[0] + ' ' + a[1] + '% ' + a[2] + '%)');
+  } catch (err) {
+    // qualquer falha => default dark, preserva a marca
+    try { document.documentElement.classList.add('dark'); document.documentElement.style.colorScheme = 'dark'; } catch (e) {}
+  }
+})();
+</script>
+<meta charset="utf-8"/>
+<meta content="width=device-width, initial-scale=1" name="viewport"/>
+<title>Do a real visual review | Agent Skills · INEMA</title>
+<meta content="Full Codex skills course: reverse engineering, triggers, freedom, verification, cost, and continuous improvement. INEMA v2 format." name="description"/>
+<meta content="agent-skills-codex-en" name="inema-course"/>
+<meta content="../../" name="course-root"/>
+<script data-inema-manifest="" type="application/json">{"course": "agent-skills-codex-en", "tracks": [{"n": "1", "title": "Foundations", "modules": [{"id": "1-1", "title": "Understand what a skill teaches", "topics": 6, "href": "curso/trilha1/modulo-1-1.html"}, {"id": "1-2", "title": "Start with the approved result", "topics": 6, "href": "curso/trilha1/modulo-1-2.html"}]}, {"n": "2", "title": "Construction", "modules": [{"id": "2-1", "title": "Build a skill with a clear job", "topics": 6, "href": "curso/trilha2/modulo-2-1.html"}, {"id": "2-2", "title": "Calibrate the agent’s freedom", "topics": 6, "href": "curso/trilha2/modulo-2-2.html"}]}, {"n": "3", "title": "Verification", "modules": [{"id": "3-1", "title": "Verify with evidence", "topics": 6, "href": "curso/trilha3/modulo-3-1.html"}, {"id": "3-2", "title": "Do a real visual review", "topics": 6, "href": "curso/trilha3/modulo-3-2.html"}]}, {"n": "4", "title": "Evolution", "modules": [{"id": "4-1", "title": "Compare quality, cost, and effort", "topics": 6, "href": "curso/trilha4/modulo-4-1.html"}, {"id": "4-2", "title": "Evolve and deliver your first skill", "topics": 6, "href": "curso/trilha4/modulo-4-2.html"}]}]}</script>
+<link href="../../assets/favicon.svg" rel="icon" type="image/svg+xml"/>
+<link href="../../assets/course.css" rel="stylesheet"/>
+<link href="../../assets/learn.css" rel="stylesheet"/>
+<link href="../../assets/patches.css" rel="stylesheet"/>
+<link href="https://inematds.github.io/agent-skills/curso/trilha3/modulo-3-2.html" hreflang="pt-BR" rel="alternate"/><link href="https://inematds.github.io/agent-skills/en/curso/trilha3/modulo-3-2.html" hreflang="en" rel="alternate"/><link href="https://inematds.github.io/agent-skills/es/curso/trilha3/modulo-3-2.html" hreflang="es" rel="alternate"/><link href="https://inematds.github.io/agent-skills/curso/trilha3/modulo-3-2.html" hreflang="x-default" rel="alternate"/><link href="https://inematds.github.io/agent-skills/en/curso/trilha3/modulo-3-2.html" rel="canonical"/><style id="course-language-css">[data-course-languages]{position:fixed;bottom:0;left:0;right:0;z-index:60;display:flex;gap:1.25rem;padding:.65rem;justify-content:center;background:#111827;color:#f3f4f6}[data-course-languages] a{color:inherit;font:14px system-ui}[data-course-languages] [aria-current]{font-weight:bold;text-decoration:underline}[data-course-languages] a:focus-visible{outline:2px solid #38bdf8;outline-offset:4px}body{padding-bottom:75px}</style></head>
+<body class="track-3">
+<a class="skip" href="#conteudo">Jump to content</a>
+<nav aria-label="Main navigation" class="site-nav">
+<div class="wrap nav-row">
+<a aria-label="Agent Skills, start" class="brand" href="../../index.html">
+<svg aria-hidden="true" fill="none" viewbox="0 0 32 32">
+<path d="m11 7-8 9 8 9M21 7l8 9-8 9M18 4l-4 24" stroke="currentColor" stroke-width="2.5"></path>
+</svg>
+<span class="brand-name">AGENT SKILLS</span>
+</a>
+<a class="text-sky-400" href="https://inema.club" rel="noopener" target="_blank">INEMA.CLUB</a>
+<div class="nav-links">
+<a class="" href="../../curso/trilha1/index.html">
+<span class="nav-full">Foundations</span>
+<span class="nav-short">T1</span>
+</a>
+<a class="" href="../../curso/trilha2/index.html">
+<span class="nav-full">Construction</span>
+<span class="nav-short">T2</span>
+</a>
+<a aria-current="page" class="active" href="../../curso/trilha3/index.html">
+<span class="nav-full">Verification</span>
+<span class="nav-short">T3</span>
+</a>
+<a class="" href="../../curso/trilha4/index.html">
+<span class="nav-full">Evolution</span>
+<span class="nav-short">T4</span>
+</a>
+</div>
+<button aria-label="Toggle light and dark theme" class="theme-toggle" id="theme-toggle">
+<svg aria-hidden="true" fill="none" viewbox="0 0 24 24">
+<circle cx="12" cy="12" r="4" stroke="currentColor" stroke-width="1.6"></circle>
+<path d="M12 1v3m0 16v3M1 12h3m16 0h3M4 4l2 2m12 12 2 2M4 20l2-2M18 6l2-2" stroke="currentColor" stroke-width="1.6"></path>
+</svg>
+</button>
+</div>
+</nav>
+<div class="wrap studybar">
+<div class="tools">
+<button data-inema-journey-open="">My learning journey</button>
+<button data-course-resume="">Continue reading</button>
+<div class="appearance-wrap">
+<button aria-controls="appearance" aria-expanded="false" data-inema-appearance-toggle="#appearance">Appearance</button>
+<div class="inema-appearance-pop" data-inema-appearance="" data-open="false" id="appearance">
+<h3>Theme</h3>
+<div class="inema-segment">
+<button aria-pressed="false" data-inema-set-theme="inema-dark">Dark</button>
+<button aria-pressed="false" data-inema-set-theme="claro">Light</button>
+<button aria-pressed="false" data-inema-set-theme="sepia">Sepia</button>
+<button aria-pressed="false" data-inema-set-theme="foco">Focus</button>
+<button aria-pressed="false" data-inema-set-theme="contraste">High contrast</button>
+</div>
+<h3>Font</h3>
+<div class="inema-segment">
+<button aria-pressed="false" data-inema-set-font="inter">Inter / system</button>
+<button aria-pressed="false" data-inema-set-font="system">System</button>
+<button aria-pressed="false" data-inema-set-font="leitura">Reading</button>
+</div>
+<h3>Size</h3>
+<div class="inema-segment">
+<button aria-pressed="false" data-inema-set-fontscale="100">100%</button>
+<button aria-pressed="false" data-inema-set-fontscale="112">112%</button>
+<button aria-pressed="false" data-inema-set-fontscale="125">125%</button>
+</div>
+<h3>Text width</h3>
+<div class="inema-segment">
+<button aria-pressed="false" data-inema-set-linewidth="60">Narrow</button>
+<button aria-pressed="false" data-inema-set-linewidth="68">Medium</button>
+<button aria-pressed="false" data-inema-set-linewidth="75">Wide</button>
+</div>
+<h3>Line spacing</h3>
+<div class="inema-segment">
+<button aria-pressed="false" data-inema-set-leading="1.45">Compact</button>
+<button aria-pressed="false" data-inema-set-leading="1.7">Comfortable</button>
+</div>
+<h3>Controls accent</h3>
+<div class="inema-segment">
+<button aria-pressed="false" data-inema-set-accent="emerald">Green</button>
+<button aria-pressed="false" data-inema-set-accent="blue">Blue</button>
+<button aria-pressed="false" data-inema-set-accent="purple">Purple</button>
+<button aria-pressed="false" data-inema-set-accent="amber">Amber</button>
+<button aria-pressed="false" data-inema-set-accent="teal">Turquoise</button>
+<button aria-pressed="false" data-inema-set-accent="rose">Pink</button>
+</div>
+</div>
+</div>
+</div>
+<div aria-label="Reading progress" aria-valuemax="100" aria-valuemin="0" aria-valuenow="0" class="meter" data-inema-meter="curso" role="progressbar">
+<div class="meter-top">
+<span data-inema-meter-frac="">0 of 0</span>
+<span data-inema-meter-pct="">0%</span>
+</div>
+<div class="inema-bar">
+<div data-inema-meter-fill="">
+</div>
+</div>
+</div>
+</div>
+<noscript>
+<p class="wrap no-script">You can read all the lessons without JavaScript. Progress, grades, and appearance controls require JavaScript.</p>
+</noscript>
+<main class="wrap" id="conteudo">
+<div class="breadcrumb">
+<a href="../../index.html">Start</a> / <a href="index.html">Verification</a> / Module 3.2</div>
+<header class="hero">
+<span class="pill">MODULE 3.2</span>
+<h1>Do a real visual review</h1>
+<p class="lead">Learn from the video case → article, and also test what the reader sees.</p>
+<p>
+<strong>At the end:</strong> Build a visual plan and inspect the rendered output.</p>
+</header>
+<div class="stats">
+<div class="stat">
+<strong>6</strong>
+<span>topics</span>
+</div>
+<div class="stat">
+<strong>55 min</strong>
+<span>estimated with hands-on practice</span>
+</div>
+<div class="stat">
+<strong>6</strong>
+<span>commented exercises</span>
+</div>
+<div class="stat">
+<strong>1</strong>
+<span>final check</span>
+</div>
+</div>
+<div class="reading-layout">
+<aside aria-label="Module index" class="toc" data-inema-toc="">
+<h2>In this module</h2>
+<span data-inema-section-counter="">Section 1 of 6</span>
+<ol>
+<li>
+<a href="#topico-1">1. Plan the relationship between idea and image</a>
+</li>
+<li>
+<a href="#topico-2">2. Choose stable, complete frames</a>
+</li>
+<li>
+<a href="#topico-3">3. Crop to explain without distorting</a>
+</li>
+<li>
+<a href="#topico-4">4. Place images next to the explanation</a>
+</li>
+<li>
+<a href="#topico-5">5. Inspect desktop, mobile, and interface states</a>
+</li>
+<li>
+<a href="#topico-6">6. Turn a visual defect into a testable rule</a>
+</li>
+</ol>
+<div aria-label="Reading progress" aria-valuemax="100" aria-valuemin="0" aria-valuenow="0" class="meter" data-inema-meter="modulo:3-2" role="progressbar">
+<div class="meter-top">
+<span data-inema-meter-frac="">0 of 0</span>
+<span data-inema-meter-pct="">0%</span>
+</div>
+<div class="inema-bar">
+<div data-inema-meter-fill="">
+</div>
+</div>
+</div>
+<p class="muted">Select a portion of the explanations to highlight or annotate.</p>
+</aside>
+<article class="lesson-content" data-inema-module="3-2" data-inema-track="3">
+<section class="lesson" data-inema-topic="modulo-3-2#topico-1" id="topico-1">
+<div class="lesson-head">
+<span class="circle">1</span>
+<h2>Plan the relationship between idea and image</h2>
+</div>
+<figure class="diagram">
+<div aria-label="Diagram with horizontal scrolling on small screens" class="diagram-scroll" role="region" tabindex="0">
+<svg aria-label="Argument → Visual evidence → Position in the text → Caption" class="w-full h-auto" role="img" viewbox="0 0 720 200">
+<defs>
+<pattern height="24" id="d3-2-1-grid" patternunits="userSpaceOnUse" width="24">
+<circle cx="2" cy="2" fill="#c084fc" opacity=".13" r="1"></circle>
+</pattern>
+<filter id="d3-2-1-glow">
+<fegaussianblur result="b" stddeviation="1.8"></fegaussianblur>
+<femerge>
+<femergenode in="b"></femergenode>
+<femergenode in="SourceGraphic"></femergenode>
+</femerge>
+</filter>
+<marker id="d3-2-1-arrow" markerheight="7" markerwidth="7" orient="auto" refx="6" refy="3.5">
+<path d="M0 0 7 3.5 0 7" fill="#c084fc"></path>
+</marker>
+</defs>
+<rect fill="#0f172a" height="200" width="720"></rect>
+<rect fill="url(#d3-2-1-grid)" height="200" width="720"></rect>
+<path d="M179 65 H192 V91 H197" fill="none" marker-end="url(#d3-2-1-arrow)" opacity=".6" stroke="#c084fc" stroke-width="1.8"></path>
+<g>
+<rect fill="#111827" filter="url(#d3-2-1-glow)" height="72" rx="10" stroke="#c084fc" stroke-width="2" width="150" x="25" y="25"></rect>
+<text fill="#e5e7eb" font-size="14" font-weight="600" text-anchor="middle" x="100.0" y="66.0">Argument</text>
+</g>
+<path d="M354 91 H367 V117 H372" fill="none" marker-end="url(#d3-2-1-arrow)" opacity=".6" stroke="#c084fc" stroke-width="1.8"></path>
+<g>
+<rect fill="#111827" height="72" rx="10" stroke="#38bdf8" stroke-width="2" width="150" x="200" y="51"></rect>
+<text fill="#e5e7eb" font-size="14" font-weight="600" text-anchor="middle" x="275.0" y="92.0">Visual evidence</text>
+</g>
+<path d="M529 117 H542 V143 H547" fill="none" marker-end="url(#d3-2-1-arrow)" opacity=".6" stroke="#c084fc" stroke-width="1.8"></path>
+<g>
+<rect fill="#111827" height="72" rx="10" stroke="#38bdf8" stroke-width="2" width="150" x="375" y="77"></rect>
+<text fill="#e5e7eb" font-size="14" font-weight="600" text-anchor="middle" x="450.0" y="118.0">Position in the text</text>
+</g>
+<g>
+<rect fill="#111827" height="72" rx="10" stroke="#38bdf8" stroke-width="2" width="150" x="550" y="103"></rect>
+<text fill="#e5e7eb" font-size="14" font-weight="600" text-anchor="middle" x="625.0" y="144.0">Caption</text>
+</g>
+</svg>
+</div>
+<figcaption>A useful image has a function you can express in a single sentence.</figcaption>
+</figure>
+<div class="inema-prose">
+<h3>What it is</h3>
+<p data-inema-block="m3-2-t1-p1" id="m3-2-t1-p1">Before selecting screenshots, list what the article needs to explain. For each claim, indicate what visual evidence would help the reader. The visual plan can include the idea, a candidate timestamp, essential detail, and the predicted position.</p>
+<h3>Why learn</h3>
+<p data-inema-block="m3-2-t1-p2" id="m3-2-t1-p2">Capturing first and writing later often leads to a collection of loosely connected images. Starting from the didactic function prevents inserting a dashboard just because it’s colorful. Sometimes an author-made table or diagram explains better.</p>
+<h3>Key concepts</h3>
+</div>
+<div class="key-grid">
+<div class="key">
+<strong>Argument</strong> what the text claims.</div>
+<div class="key">
+<strong>Evidence</strong> what the image shows.</div>
+<div class="key">
+<strong>Position</strong> where it helps.</div>
+<div class="key">
+<strong>Caption</strong> explicit link to the idea.</div>
+</div>
+<div class="code-box">
+<div class="code-head">
+<span>COMMENTED EXAMPLE · 3.2.1</span>
+<button data-copy="code-3-2-1">Copy example</button>
+</div>
+<pre id="code-3-2-1">
+<code>Idea: the review found two mistakes.
+Visual: screen showing the test results.
+Detail: two failing cases and the summary.
+Position: after explaining the evaluation criteria.</code>
+</pre>
+</div>
+<div class="comparison">
+<div class="compare-good">
+<h3>✓ Do it like this</h3>
+<p>Write the function before choosing the frame.</p>
+</div>
+<div class="compare-bad">
+<h3>✗ Avoid this mistake</h3>
+<p>Use the same frame for different claims without an explanation.</p>
+</div>
+</div>
+<aside class="tip">
+<strong>Bring it to your skill.</strong> A useful image has a function you can express in a single sentence. Use this principle to review the example before moving on.</aside>
+<div class="practice">
+<h3>Practice before revealing</h3>
+<p>Which visual explains the difference between a rule and a judgment best?</p>
+<details>
+<summary>View commented response</summary>
+<p>A side-by-side comparison with exact calculation and editorial choice. A decorative photo of a computer does not show that difference.</p>
+</details>
+</div>
+<div class="read-controls">
+<button aria-pressed="false" data-inema-read-toggle="">
+<span aria-hidden="true">✓</span>
+<span data-inema-read-label="">Mark as read</span>
+</button>
+<button aria-pressed="false" data-inema-doubt-toggle="">I have a question</button>
+</div>
+</section>
+<section class="lesson" data-inema-topic="modulo-3-2#topico-2" id="topico-2">
+<div class="lesson-head">
+<span class="circle">2</span>
+<h2>Choose stable, complete frames</h2>
+</div>
+<figure class="diagram">
+<div aria-label="Diagram with horizontal scrolling on small screens" class="diagram-scroll" role="region" tabindex="0">
+<svg aria-label="Transition → Stable frame → Complete detail → Approved capture" class="w-full h-auto" role="img" viewbox="0 0 720 200">
+<defs>
+<pattern height="24" id="d3-2-2-grid" patternunits="userSpaceOnUse" width="24">
+<circle cx="2" cy="2" fill="#c084fc" opacity=".13" r="1"></circle>
+</pattern>
+<filter id="d3-2-2-glow">
+<fegaussianblur result="b" stddeviation="1.8"></fegaussianblur>
+<femerge>
+<femergenode in="b"></femergenode>
+<femergenode in="SourceGraphic"></femergenode>
+</femerge>
+</filter>
+<marker id="d3-2-2-arrow" markerheight="7" markerwidth="7" orient="auto" refx="6" refy="3.5">
+<path d="M0 0 7 3.5 0 7" fill="#c084fc"></path>
+</marker>
+</defs>
+<rect fill="#0f172a" height="200" width="720"></rect>
+<rect fill="url(#d3-2-2-grid)" height="200" width="720"></rect>
+<path d="M170 137 H182 V110 H192" fill="none" marker-end="url(#d3-2-2-arrow)" opacity=".6" stroke="#c084fc" stroke-width="1.8"></path>
+<g>
+<rect fill="#111827" filter="url(#d3-2-2-glow)" height="62" rx="10" stroke="#c084fc" stroke-width="2" width="150" x="20" y="105"></rect>
+<text fill="#e5e7eb" font-size="14" font-weight="600" text-anchor="middle" x="95.0" y="141.0">Transition</text>
+</g>
+<path d="M345 110 H357 V83 H367" fill="none" marker-end="url(#d3-2-2-arrow)" opacity=".6" stroke="#c084fc" stroke-width="1.8"></path>
+<g>
+<rect fill="#111827" height="62" rx="10" stroke="#38bdf8" stroke-width="2" width="150" x="195" y="78"></rect>
+<text fill="#e5e7eb" font-size="14" font-weight="600" text-anchor="middle" x="270.0" y="114.0">Stable frame</text>
+</g>
+<path d="M520 83 H532 V56 H542" fill="none" marker-end="url(#d3-2-2-arrow)" opacity=".6" stroke="#c084fc" stroke-width="1.8"></path>
+<g>
+<rect fill="#111827" height="62" rx="10" stroke="#38bdf8" stroke-width="2" width="150" x="370" y="51"></rect>
+<text fill="#e5e7eb" font-size="14" font-weight="600" text-anchor="middle" x="445.0" y="87.0">Complete detail</text>
+</g>
+<g>
+<rect fill="#111827" height="62" rx="10" stroke="#38bdf8" stroke-width="2" width="150" x="545" y="24"></rect>
+<text fill="#e5e7eb" font-size="14" font-weight="600" text-anchor="middle" x="620.0" y="60.0">Approved capture</text>
+</g>
+</svg>
+</div>
+<figcaption>The best moment is when the information is complete, not a second chosen in advance.</figcaption>
+</figure>
+<div class="inema-prose">
+<h3>What it is</h3>
+<p data-inema-block="m3-2-t2-p1" id="m3-2-t2-p1">A good screenshot must make sense as a static image. Check whether a transition has finished, whether the cursor doesn’t cover the data, and whether important labels are present. Go back a few moments in the source when needed to recover context.</p>
+<h3>Why learn</h3>
+<p data-inema-block="m3-2-t2-p2" id="m3-2-t2-p2">The article reader didn’t see the seconds before. A box without a title or a number without a unit requires guessing. This is one of the problems shown in the video comparison: screenshots that belong to the source but don’t work when used in isolation.</p>
+<h3>Key concepts</h3>
+</div>
+<div class="key-grid">
+<div class="key">
+<strong>Stability</strong> animation completed.</div>
+<div class="key">
+<strong>Context</strong> label and unit are present.</div>
+<div class="key">
+<strong>Focus</strong> visible detail.</div>
+<div class="key">
+<strong>Source</strong> recoverable timestamp.</div>
+</div>
+<div class="code-box">
+<div class="code-head">
+<span>COMMENTED EXAMPLE · 3.2.2</span>
+<button data-copy="code-3-2-2">Copy example</button>
+</div>
+<pre id="code-3-2-2">
+<code>Fail: half the table is still off-screen.
+Fail: score is visible, but without the metric name.
+Pass: result + label + sufficient context.</code>
+</pre>
+</div>
+<div class="timeline">
+<h3>From concept to action</h3>
+<ol>
+<li>Transition: identify the initial condition.</li>
+<li>Stable frame: apply the described decision.</li>
+<li>Complete detail: check the effect in the example.</li>
+<li>Approved capture: record the output evidence.</li>
+</ol>
+</div>
+<div class="comparison">
+<div class="compare-good">
+<h3>✓ Do it like this</h3>
+<p>Compare at least two frames when the moment is ambiguous.</p>
+</div>
+<div class="compare-bad">
+<h3>✗ Avoid this mistake</h3>
+<p>Accept a crop only because it was taken from the correct video.</p>
+</div>
+</div>
+<div class="practice">
+<h3>Practice before revealing</h3>
+<p>Does an isolated “94” number explain a quality improvement?</p>
+<details>
+<summary>View commented response</summary>
+<p>No. You need to show or explain the metric, the scale, and the relationship with the previous evaluation. The number alone could mean anything.</p>
+</details>
+</div>
+<div class="read-controls">
+<button aria-pressed="false" data-inema-read-toggle="">
+<span aria-hidden="true">✓</span>
+<span data-inema-read-label="">Mark as read</span>
+</button>
+<button aria-pressed="false" data-inema-doubt-toggle="">I have a question</button>
+</div>
+</section>
+<section class="lesson" data-inema-topic="modulo-3-2#topico-3" id="topico-3">
+<div class="lesson-head">
+<span class="circle">3</span>
+<h2>Crop to explain without distorting</h2>
+</div>
+<figure class="diagram">
+<div aria-label="Diagram with horizontal scrolling on small screens" class="diagram-scroll" role="region" tabindex="0">
+<svg aria-label="Entire image → Relevant area → Preserved context → Final readability" class="w-full h-auto" role="img" viewbox="0 0 720 200">
+<defs>
+<pattern height="24" id="d3-2-3-grid" patternunits="userSpaceOnUse" width="24">
+<circle cx="2" cy="2" fill="#c084fc" opacity=".13" r="1"></circle>
+</pattern>
+<filter id="d3-2-3-glow">
+<fegaussianblur result="b" stddeviation="1.8"></fegaussianblur>
+<femerge>
+<femergenode in="b"></femergenode>
+<femergenode in="SourceGraphic"></femergenode>
+</femerge>
+</filter>
+<marker id="d3-2-3-arrow" markerheight="7" markerwidth="7" orient="auto" refx="6" refy="3.5">
+<path d="M0 0 7 3.5 0 7" fill="#c084fc"></path>
+</marker>
+</defs>
+<rect fill="#0f172a" height="200" width="720"></rect>
+<rect fill="url(#d3-2-3-grid)" height="200" width="720"></rect>
+<path d="M175 100 H193" fill="none" marker-end="url(#d3-2-3-arrow)" opacity=".6" stroke="#c084fc" stroke-width="1.8"></path>
+<g>
+<rect fill="#111827" filter="url(#d3-2-3-glow)" height="74" rx="10" stroke="#c084fc" stroke-width="2" width="150" x="20" y="63"></rect>
+<text fill="#e5e7eb" font-size="14" font-weight="600" text-anchor="middle" x="95.0" y="105.0">Entire image</text>
+</g>
+<path d="M350 100 H368" fill="none" marker-end="url(#d3-2-3-arrow)" opacity=".6" stroke="#c084fc" stroke-width="1.8"></path>
+<g>
+<rect fill="#111827" height="74" rx="10" stroke="#38bdf8" stroke-width="2" width="150" x="195" y="63"></rect>
+<text fill="#e5e7eb" font-size="14" font-weight="600" text-anchor="middle" x="270.0" y="105.0">Relevant area</text>
+</g>
+<path d="M525 100 H543" fill="none" marker-end="url(#d3-2-3-arrow)" opacity=".6" stroke="#c084fc" stroke-width="1.8"></path>
+<g>
+<rect fill="#111827" height="74" rx="10" stroke="#38bdf8" stroke-width="2" width="150" x="370" y="63"></rect>
+<text fill="#e5e7eb" font-size="14" font-weight="600" text-anchor="middle" x="445.0" y="105.0">Preserved context</text>
+</g>
+<g>
+<rect fill="#111827" height="74" rx="10" stroke="#38bdf8" stroke-width="2" width="150" x="545" y="63"></rect>
+<text fill="#e5e7eb" font-size="14" font-weight="600" text-anchor="middle" x="620.0" y="105.0">Final reading</text>
+</g>
+</svg>
+</div>
+<figcaption>The detail grows, but the labels that give meaning remain within the frame.</figcaption>
+</figure>
+<div class="inema-prose">
+<h3>What it is</h3>
+<p data-inema-block="m3-2-t3-p1" id="m3-2-t3-p1">A good crop increases relevant information and preserves context. A highlight can guide the eye, but it shouldn’t hide values that would change interpretation. For sensitive material, use opaque redaction when removal is necessary and authorized.</p>
+<h3>Why learn</h3>
+<p data-inema-block="m3-2-t3-p2" id="m3-2-t3-p2">Excessive zoom removes titles; insufficient zoom makes the text unreadable. The choice must be verified at the actual reading size. Never declare that privacy is “resolved” just because a blur effect was applied.</p>
+<h3>Key concepts</h3>
+</div>
+<div class="key-grid">
+<div class="key">
+<strong>Crop</strong> remove distraction.</div>
+<div class="key">
+<strong>Context</strong> preserve meaning.</div>
+<div class="key">
+<strong>Highlight</strong> guide the viewer’s attention.</div>
+<div class="key">
+<strong>Review</strong> check exposure and readability.</div>
+</div>
+<div class="code-box">
+<div class="code-head">
+<span>COMMENTED EXAMPLE · 3.2.3</span>
+<button data-copy="code-3-2-3">Copy example</button>
+</div>
+<pre id="code-3-2-3">
+<code>Crop checklist
+[ ] The central data is readable.
+[ ] The title or caption explains the metric.
+[ ] No essential label was cut off.
+[ ] Sensitive fields do not appear in the final output.</code>
+</pre>
+</div>
+<div class="comparison">
+<div class="compare-good">
+<h3>✓ Do it like this</h3>
+<p>Inspect the final file after exporting the image.</p>
+</div>
+<div class="compare-bad">
+<h3>✗ Avoid this mistake</h3>
+<p>Mistaking a visual highlight for proof that the content is correct.</p>
+</div>
+</div>
+<div class="practice">
+<h3>Practice before revealing</h3>
+<p>If removing the header makes the number ambiguous, what’s the solution?</p>
+<details>
+<summary>View commented response</summary>
+<p>Enlarge the crop or add a faithful and sufficient caption. If the caption has to invent context that the source does not provide, the image is not usable.</p>
+</details>
+</div>
+<div class="read-controls">
+<button aria-pressed="false" data-inema-read-toggle="">
+<span aria-hidden="true">✓</span>
+<span data-inema-read-label="">Mark as read</span>
+</button>
+<button aria-pressed="false" data-inema-doubt-toggle="">I have a question</button>
+</div>
+</section>
+<section class="lesson" data-inema-topic="modulo-3-2#topico-4" id="topico-4">
+<div class="lesson-head">
+<span class="circle">4</span>
+<h2>Place images next to the explanation</h2>
+</div>
+<figure class="diagram">
+<div aria-label="Diagram with horizontal scrolling on small screens" class="diagram-scroll" role="region" tabindex="0">
+<svg aria-label="Statement → Matching image → Interpretation → Next idea" class="w-full h-auto" role="img" viewbox="0 0 720 200">
+<defs>
+<pattern height="24" id="d3-2-4-grid" patternunits="userSpaceOnUse" width="24">
+<circle cx="2" cy="2" fill="#c084fc" opacity=".13" r="1"></circle>
+</pattern>
+<filter id="d3-2-4-glow">
+<fegaussianblur result="b" stddeviation="1.8"></fegaussianblur>
+<femerge>
+<femergenode in="b"></femergenode>
+<femergenode in="SourceGraphic"></femergenode>
+</femerge>
+</filter>
+<marker id="d3-2-4-arrow" markerheight="7" markerwidth="7" orient="auto" refx="6" refy="3.5">
+<path d="M0 0 7 3.5 0 7" fill="#c084fc"></path>
+</marker>
+</defs>
+<rect fill="#0f172a" height="200" width="720"></rect>
+<rect fill="url(#d3-2-4-grid)" height="200" width="720"></rect>
+<path d="M175 100 H193" fill="none" marker-end="url(#d3-2-4-arrow)" opacity=".6" stroke="#c084fc" stroke-width="1.8"></path>
+<g>
+<rect fill="#111827" filter="url(#d3-2-4-glow)" height="74" rx="10" stroke="#c084fc" stroke-width="2" width="150" x="20" y="63"></rect>
+<text fill="#e5e7eb" font-size="14" font-weight="600" text-anchor="middle" x="95.0" y="105.0">Claim</text>
+</g>
+<path d="M350 100 H368" fill="none" marker-end="url(#d3-2-4-arrow)" opacity=".6" stroke="#c084fc" stroke-width="1.8"></path>
+<g>
+<rect fill="#111827" height="74" rx="10" stroke="#38bdf8" stroke-width="2" width="150" x="195" y="63"></rect>
+<text fill="#e5e7eb" font-size="14" font-weight="600" text-anchor="middle" x="270.0" y="96.0">Image</text>
+<text fill="#e5e7eb" font-size="14" font-weight="600" text-anchor="middle" x="270.0" y="115.0">corresponding</text>
+</g>
+<path d="M525 100 H543" fill="none" marker-end="url(#d3-2-4-arrow)" opacity=".6" stroke="#c084fc" stroke-width="1.8"></path>
+<g>
+<rect fill="#111827" height="74" rx="10" stroke="#38bdf8" stroke-width="2" width="150" x="370" y="63"></rect>
+<text fill="#e5e7eb" font-size="14" font-weight="600" text-anchor="middle" x="445.0" y="105.0">Interpretation</text>
+</g>
+<g>
+<rect fill="#111827" height="74" rx="10" stroke="#38bdf8" stroke-width="2" width="150" x="545" y="63"></rect>
+<text fill="#e5e7eb" font-size="14" font-weight="600" text-anchor="middle" x="620.0" y="105.0">Next idea</text>
+</g>
+</svg>
+</div>
+<figcaption>The didactic unit is the text + image set, not the isolated image.</figcaption>
+</figure>
+<div class="inema-prose">
+<h3>What it is</h3>
+<p data-inema-block="m3-2-t4-p1" id="m3-2-t4-p1">The sequence of text and image builds understanding. The reader should find the image near the statement it supports. Four screenshots grouped at the end can indicate that the insertion failed or that the review didn’t check the final order.</p>
+<h3>Why learn</h3>
+<p data-inema-block="m3-2-t4-p2" id="m3-2-t4-p2">The video shows this problem by comparing outputs: having the images in the document isn’t enough. Verification must go through the assembled article, including the space between blocks and the link to the paragraphs.</p>
+<h3>Key concepts</h3>
+</div>
+<div class="key-grid">
+<div class="key">
+<strong>Proximity</strong> less visual searching.</div>
+<div class="key">
+<strong>Order</strong> follows the reasoning.</div>
+<div class="key">
+<strong>Caption</strong> explains the relationship.</div>
+<div class="key">
+<strong>Pace</strong> alternates explanation and evidence.</div>
+</div>
+<div class="code-box">
+<div class="code-head">
+<span>COMMENTED EXAMPLE · 3.2.4</span>
+<button data-copy="code-3-2-4">Copy example</button>
+</div>
+<pre id="code-3-2-4">
+<code>Good: explain the three filters → show the three filters.
+Bad: explain the report → show the initial screen.
+Bad: finish the article with captures without a caption.</code>
+</pre>
+</div>
+<div class="comparison">
+<div class="compare-good">
+<h3>✓ Do it like this</h3>
+<p>Read the final sequence like someone who hasn’t seen the source.</p>
+</div>
+<div class="compare-bad">
+<h3>✗ Avoid this mistake</h3>
+<p>Approve by counting the inserted files.</p>
+</div>
+</div>
+<aside class="tip">
+<strong>Bring it to your skill.</strong> The didactic unit is the text + image set, not the image alone. Use this principle to review the example before moving on.</aside>
+<div class="practice">
+<h3>Practice before revealing</h3>
+<p>A relevant image appears three sections after the paragraph. What should you review?</p>
+<details>
+<summary>View commented response</summary>
+<p>Reposition the image near the paragraph or reorganize the textual sequence. The correction is layout-related; it does not require regenerating the entire article.</p>
+</details>
+</div>
+<div class="read-controls">
+<button aria-pressed="false" data-inema-read-toggle="">
+<span aria-hidden="true">✓</span>
+<span data-inema-read-label="">Mark as read</span>
+</button>
+<button aria-pressed="false" data-inema-doubt-toggle="">I have a question</button>
+</div>
+</section>
+<section class="lesson" data-inema-topic="modulo-3-2#topico-5" id="topico-5">
+<div class="lesson-head">
+<span class="circle">5</span>
+<h2>Inspect desktop, mobile, and interface states</h2>
+</div>
+<figure class="diagram">
+<div aria-label="Diagram with horizontal scrolling on small screens" class="diagram-scroll" role="region" tabindex="0">
+<svg aria-label="Desktop → Mobile → Keyboard + themes → Bug logging" class="w-full h-auto" role="img" viewbox="0 0 720 200">
+<defs>
+<pattern height="24" id="d3-2-5-grid" patternunits="userSpaceOnUse" width="24">
+<circle cx="2" cy="2" fill="#c084fc" opacity=".13" r="1"></circle>
+</pattern>
+<filter id="d3-2-5-glow">
+<fegaussianblur result="b" stddeviation="1.8"></fegaussianblur>
+<femerge>
+<femergenode in="b"></femergenode>
+<femergenode in="SourceGraphic"></femergenode>
+</femerge>
+</filter>
+<marker id="d3-2-5-arrow" markerheight="7" markerwidth="7" orient="auto" refx="6" refy="3.5">
+<path d="M0 0 7 3.5 0 7" fill="#c084fc"></path>
+</marker>
+</defs>
+<rect fill="#0f172a" height="200" width="720"></rect>
+<rect fill="url(#d3-2-5-grid)" height="200" width="720"></rect>
+<path d="M170 137 H182 V110 H192" fill="none" marker-end="url(#d3-2-5-arrow)" opacity=".6" stroke="#c084fc" stroke-width="1.8"></path>
+<g>
+<rect fill="#111827" filter="url(#d3-2-5-glow)" height="62" rx="10" stroke="#c084fc" stroke-width="2" width="150" x="20" y="105"></rect>
+<text fill="#e5e7eb" font-size="14" font-weight="600" text-anchor="middle" x="95.0" y="141.0">Desktop</text>
+</g>
+<path d="M345 110 H357 V83 H367" fill="none" marker-end="url(#d3-2-5-arrow)" opacity=".6" stroke="#c084fc" stroke-width="1.8"></path>
+<g>
+<rect fill="#111827" height="62" rx="10" stroke="#38bdf8" stroke-width="2" width="150" x="195" y="78"></rect>
+<text fill="#e5e7eb" font-size="14" font-weight="600" text-anchor="middle" x="270.0" y="114.0">Mobile</text>
+</g>
+<path d="M520 83 H532 V56 H542" fill="none" marker-end="url(#d3-2-5-arrow)" opacity=".6" stroke="#c084fc" stroke-width="1.8"></path>
+<g>
+<rect fill="#111827" height="62" rx="10" stroke="#38bdf8" stroke-width="2" width="150" x="370" y="51"></rect>
+<text fill="#e5e7eb" font-size="14" font-weight="600" text-anchor="middle" x="445.0" y="87.0">Keyboard + themes</text>
+</g>
+<g>
+<rect fill="#111827" height="62" rx="10" stroke="#38bdf8" stroke-width="2" width="150" x="545" y="24"></rect>
+<text fill="#e5e7eb" font-size="14" font-weight="600" text-anchor="middle" x="620.0" y="60.0">Defect record</text>
+</g>
+</svg>
+</div>
+<figcaption>Vary the reading condition; keep the same task to compare.</figcaption>
+</figure>
+<div class="inema-prose">
+<h3>What it is</h3>
+<p data-inema-block="m3-2-t5-p1" id="m3-2-t5-p1">A page needs to be viewed rendered to confirm geometry, contrast, and readability. Open different widths, test keyboard navigation, and check expanded states, themes, and panels. Screenshots are evidence of specific states, not of all possibilities.</p>
+<h3>Why learn</h3>
+<p data-inema-block="m3-2-t5-p2" id="m3-2-t5-p2">Reading the code doesn’t necessarily reveal cut-off text, focus hidden by the menu, or a button covered by another element. Review must link visual observations to concrete actions and preserve content while correcting the layout.</p>
+<h3>Key concepts</h3>
+</div>
+<div class="key-grid">
+<div class="key">
+<strong>Viewport</strong> reading area size.</div>
+<div class="key">
+<strong>Overflow</strong> the content overflows the container.</div>
+<div class="key">
+<strong>Focus</strong> visible keyboard position.</div>
+<div class="key">
+<strong>State</strong> open, closed, theme, and progress.</div>
+</div>
+<div class="code-box">
+<div class="code-head">
+<span>COMMENTED EXAMPLE · 3.2.5</span>
+<button data-copy="code-3-2-5">Copy example</button>
+</div>
+<pre id="code-3-2-5">
+<code>Step 1: open the page and the first section.
+Step 2: reduce to mobile width.
+Step 3: use Tab and open the panel.
+Step 4: check text, focus, and scrolling.</code>
+</pre>
+</div>
+<div class="timeline">
+<h3>From concept to action</h3>
+<ol>
+<li>Desktop: identify the initial condition.</li>
+<li>Mobile: apply the decision described.</li>
+<li>Keyboard + themes: check the effect in the example.</li>
+<li>Bug logging: record the output evidence.</li>
+</ol>
+</div>
+<div class="comparison">
+<div class="compare-good">
+<h3>✓ Do it like this</h3>
+<p>Record the width, page, and state of the observed defect.</p>
+</div>
+<div class="compare-bad">
+<h3>✗ Avoid this mistake</h3>
+<p>Call one complete accessibility audit screenshot.</p>
+</div>
+</div>
+<div class="practice">
+<h3>Practice before revealing</h3>
+<p>A table is wide on mobile. How do you preserve readability?</p>
+<details>
+<summary>View commented response</summary>
+<p>Use a container with clearly identified horizontal scrolling, keeping the page within the screen. Don’t shrink the font until it becomes illegible, and don’t hide important columns.</p>
+</details>
+</div>
+<div class="read-controls">
+<button aria-pressed="false" data-inema-read-toggle="">
+<span aria-hidden="true">✓</span>
+<span data-inema-read-label="">Mark as read</span>
+</button>
+<button aria-pressed="false" data-inema-doubt-toggle="">I have a question</button>
+</div>
+</section>
+<section class="lesson" data-inema-topic="modulo-3-2#topico-6" id="topico-6">
+<div class="lesson-head">
+<span class="circle">6</span>
+<h2>Turn a visual defect into a testable rule</h2>
+</div>
+<figure class="diagram">
+<div aria-label="Diagram with horizontal scrolling on small screens" class="diagram-scroll" role="region" tabindex="0">
+<svg aria-label="Observed defect → Minimum rule → New case → Next review" class="w-full h-auto" role="img" viewbox="0 0 720 200">
+<defs>
+<pattern height="24" id="d3-2-6-grid" patternunits="userSpaceOnUse" width="24">
+<circle cx="2" cy="2" fill="#c084fc" opacity=".13" r="1"></circle>
+</pattern>
+<filter id="d3-2-6-glow">
+<fegaussianblur result="b" stddeviation="1.8"></fegaussianblur>
+<femerge>
+<femergenode in="b"></femergenode>
+<femergenode in="SourceGraphic"></femergenode>
+</femerge>
+</filter>
+<marker id="d3-2-6-arrow" markerheight="7" markerwidth="7" orient="auto" refx="6" refy="3.5">
+<path d="M0 0 7 3.5 0 7" fill="#c084fc"></path>
+</marker>
+</defs>
+<rect fill="#0f172a" height="200" width="720"></rect>
+<rect fill="url(#d3-2-6-grid)" height="200" width="720"></rect>
+<path d="M280 54 H414" fill="none" marker-end="url(#d3-2-6-arrow)" opacity=".6" stroke="#c084fc" stroke-width="1.8"></path>
+<path d="M540 87 V110" fill="none" marker-end="url(#d3-2-6-arrow)" opacity=".6" stroke="#c084fc" stroke-width="1.8"></path>
+<path d="M420 148 H287" fill="none" marker-end="url(#d3-2-6-arrow)" opacity=".6" stroke="#c084fc" stroke-width="1.8"></path>
+<path d="M160 116 V92" fill="none" marker-end="url(#d3-2-6-arrow)" opacity=".6" stroke="#c084fc" stroke-width="1.8"></path>
+<g>
+<rect fill="#111827" filter="url(#d3-2-6-glow)" height="64" rx="10" stroke="#c084fc" stroke-width="2" width="240" x="40" y="22"></rect>
+<text fill="#e5e7eb" font-size="14" font-weight="600" text-anchor="middle" x="160.0" y="59.0">Observed defect</text>
+</g>
+<g>
+<rect fill="#111827" height="64" rx="10" stroke="#38bdf8" stroke-width="2" width="240" x="420" y="22"></rect>
+<text fill="#e5e7eb" font-size="14" font-weight="600" text-anchor="middle" x="540.0" y="59.0">Minimum rule</text>
+</g>
+<g>
+<rect fill="#111827" height="64" rx="10" stroke="#38bdf8" stroke-width="2" width="240" x="420" y="116"></rect>
+<text fill="#e5e7eb" font-size="14" font-weight="600" text-anchor="middle" x="540.0" y="153.0">New case</text>
+</g>
+<g>
+<rect fill="#111827" height="64" rx="10" stroke="#38bdf8" stroke-width="2" width="240" x="40" y="116"></rect>
+<text fill="#e5e7eb" font-size="14" font-weight="600" text-anchor="middle" x="160.0" y="153.0">Next review</text>
+</g>
+</svg>
+</div>
+<figcaption>A bad image becomes learning only when it changes the procedure and the test.</figcaption>
+</figure>
+<div class="inema-prose">
+<h3>What it is</h3>
+<p data-inema-block="m3-2-t6-p1" id="m3-2-t6-p1">Useful visual feedback identifies the location, symptom, and effect. “The second image cut off the title and became incomprehensible” is more actionable than “the images looked bad”. The new rule should address the cause and feed into the next review.</p>
+<h3>Why learn</h3>
+<p data-inema-block="m3-2-t6-p2" id="m3-2-t6-p2">If you only fix the final file, the process may repeat the same error in the next run. Update the selection instruction, add a test case, and check whether the change also works in a different video.</p>
+<h3>Key concepts</h3>
+</div>
+<div class="key-grid">
+<div class="key">
+<strong>Observation</strong>concrete defect.</div>
+<div class="key">
+<strong>Impact</strong>harm to the reader.</div>
+<div class="key">
+<strong>Rule</strong>generalizable prevention.</div>
+<div class="key">
+<strong>Test</strong>case that detects recurrence.</div>
+</div>
+<div class="code-box">
+<div class="code-head">
+<span>COMMENTED EXAMPLE · 3.2.6</span>
+<button data-copy="code-3-2-6">Copy example</button>
+</div>
+<pre id="code-3-2-6">
+<code>Defect: frame captured during a transition.
+Rule: choose complete, stable visual states.
+Test: video with long animation in the main explanation.
+Acceptance: no frame depends on content that’s still hidden.</code>
+</pre>
+</div>
+<div class="comparison">
+<div class="compare-good">
+<h3>✓ Do it like this</h3>
+<p>Preserve good examples as a counter-proof of correctness.</p>
+</div>
+<div class="compare-bad">
+<h3>✗ Avoid this mistake</h3>
+<p>Prohibit all motion frames because of one case.</p>
+</div>
+</div>
+<div class="practice">
+<h3>Practice before revealing</h3>
+<p>Write feedback for four standalone images at the end.</p>
+<details>
+<summary>View commented response</summary>
+<p>“The last four captures have no clear link to the paragraphs. Link each one to a statement, reposition it, and check the rendered sequence. Remove the ones that add no explanation.”</p>
+</details>
+</div>
+<div class="read-controls">
+<button aria-pressed="false" data-inema-read-toggle="">
+<span aria-hidden="true">✓</span>
+<span data-inema-read-label="">Mark as read</span>
+</button>
+<button aria-pressed="false" data-inema-doubt-toggle="">I have a question</button>
+</div>
+</section>
+<section class="quiz" data-inema-check="q-3-2">
+<span class="eyebrow">CHECK WITHOUT BLOCKING</span>
+<h2>Check your understanding</h2>
+<p>A frame was captured mid-animation and cut off the conclusion. What’s the smallest correction?</p>
+<div class="quiz-options">
+<button data-inema-check-option="0">Add more images.</button>
+<button data-inema-check-option="1">Choose a stable frame and review the crop in context.</button>
+<button data-inema-check-option="2">Increase the article title.</button>
+</div>
+<div aria-live="polite" data-inema-check-feedback="" role="status">
+</div>
+</section>
+<section class="module-summary">
+<h2>What you take from this module</h2>
+<p>Build a visual plan and inspect the rendered output.</p>
+<ul>
+<li>Plan the relationship between idea and image.</li>
+<li>Choose stable, complete frames.</li>
+<li>Crop to explain without distorting.</li>
+<li>Place images next to the explanation.</li>
+<li>Inspect desktop, mobile, and UI states.</li>
+<li>Turn a visual defect into a testable rule.</li>
+</ul>
+<p>Next action: save the exercise in your learning lab and record what still needs review.</p>
+</section>
+<div class="actions">
+<a class="btn" href="index.html">← Learning track map</a>
+<a class="btn cta" href="../trilha4/modulo-4-1.html">Next: Compare quality, cost, and effort →</a>
+</div>
+</article>
+</div>
+<p class="muted">Module reference: the provided transcript and <a href="../../index.html#fontes">course sources and technical notes</a>.</p>
+</main>
+<footer>
+<div class="wrap">Agent Skills · INEMA.CLUB · v1.1.0 · Course in Portuguese<br/>Original educational material based on the indicated reference. Progress saved in this browser; export a copy to My learning journey.<br/>
+<a href="../../index.html#fontes">References and editorial criteria</a> · <a download="" href="../../materiais/kit-agent-skills.zip">Download practice kit</a>
+</div>
+</footer>
+<dialog aria-label="Read the module" id="module-modal">
+<button data-close-modal="">Close module</button>
+<iframe title="Full module content">
+</iframe>
+</dialog>
+<script id="quiz-data" type="application/json">{"id": "q-3-2", "q": "A frame was captured mid-animation and cut off the conclusion. What’s the smallest correction?", "options": ["Add more images.", "Choose a stable frame and review the crop in context.", "Increase the article title."], "answer": "1", "explain": {"0": "The problem is in the selection and the crop. Fixing those points preserves the rest of the work.", "1": "The problem is in the selection and the crop. Fixing those points preserves the rest of the work.", "2": "The problem is in the selection and the crop. Fixing those points preserves the rest of the work."}}</script>
+<script src="../../assets/learn.js">
+</script>
+<script src="../../assets/course.js">
+</script>
+<nav aria-label="Course language" data-course-languages=""><a href="../../../curso/trilha3/modulo-3-2.html" hreflang="pt-BR" lang="pt-BR">Português</a><a aria-current="page" href="modulo-3-2.html" hreflang="en" lang="en">English</a><a href="../../../es/curso/trilha3/modulo-3-2.html" hreflang="es" lang="es">Español</a></nav><script data-course-language-hash="">document.querySelectorAll('[data-course-languages] a').forEach(function(a){a.addEventListener('click',function(){a.href=a.getAttribute('href').split('#')[0]+location.hash;});});</script></body>
+</html>

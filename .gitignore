@@ -1,0 +1,6 @@
+node_modules/
+__pycache__/
+*.pyc
+verificacao/i18n/cache/
+verificacao/i18n/*response*.json
+verificacao/i18n/cache-*.json

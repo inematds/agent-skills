@@ -1,0 +1,212 @@
+{
+  "results": [
+    {
+      "name": "13 páginas; links locais, IDs, manifesto e desktop",
+      "passed": true
+    },
+    {
+      "name": "53 SVG e 48 tópicos",
+      "passed": true
+    },
+    {
+      "name": "Toggle claro pela interface",
+      "passed": true
+    },
+    {
+      "name": "Accordion abre",
+      "passed": true
+    },
+    {
+      "name": "Accordion fecha anterior",
+      "passed": true
+    },
+    {
+      "name": "Modal carrega iframe",
+      "passed": true
+    },
+    {
+      "name": "Leitura persiste",
+      "passed": true
+    },
+    {
+      "name": "Progresso do curso agrega",
+      "passed": true
+    },
+    {
+      "name": "Jornada tem diálogo",
+      "passed": true
+    },
+    {
+      "name": "Quiz aceita resposta correta",
+      "passed": true
+    },
+    {
+      "name": "Highlight com nota",
+      "passed": true
+    },
+    {
+      "name": "Highlight restaurado",
+      "passed": true
+    },
+    {
+      "name": "Aparência pela interface",
+      "passed": true
+    },
+    {
+      "name": "JSON válido",
+      "passed": true
+    },
+    {
+      "name": "Import inválido no-op",
+      "passed": true
+    },
+    {
+      "name": "Round-trip com campos futuros",
+      "passed": true
+    },
+    {
+      "name": "Import estruturalmente inválido no-op",
+      "passed": true
+    },
+    {
+      "name": "Retomada entre páginas por âncora",
+      "passed": true
+    },
+    {
+      "name": "Contraste de texto nos cinco temas ≥ 4,5",
+      "passed": true
+    },
+    {
+      "name": "Mobile sem overflow: index.html",
+      "passed": true
+    },
+    {
+      "name": "Mobile sem overflow: curso/trilha1/index.html",
+      "passed": true
+    },
+    {
+      "name": "Mobile sem overflow: curso/trilha2/index.html",
+      "passed": true
+    },
+    {
+      "name": "Mobile sem overflow: curso/trilha3/index.html",
+      "passed": true
+    },
+    {
+      "name": "Mobile sem overflow: curso/trilha4/index.html",
+      "passed": true
+    },
+    {
+      "name": "Mobile sem overflow: curso/trilha1/modulo-1-1.html",
+      "passed": true
+    },
+    {
+      "name": "Mobile sem overflow: curso/trilha1/modulo-1-2.html",
+      "passed": true
+    },
+    {
+      "name": "Mobile sem overflow: curso/trilha2/modulo-2-1.html",
+      "passed": true
+    },
+    {
+      "name": "Mobile sem overflow: curso/trilha2/modulo-2-2.html",
+      "passed": true
+    },
+    {
+      "name": "Mobile sem overflow: curso/trilha3/modulo-3-1.html",
+      "passed": true
+    },
+    {
+      "name": "Mobile sem overflow: curso/trilha3/modulo-3-2.html",
+      "passed": true
+    },
+    {
+      "name": "Mobile sem overflow: curso/trilha4/modulo-4-1.html",
+      "passed": true
+    },
+    {
+      "name": "Mobile sem overflow: curso/trilha4/modulo-4-2.html",
+      "passed": true
+    },
+    {
+      "name": "Toggle claro pela interface",
+      "passed": true
+    },
+    {
+      "name": "Simulador trata zero",
+      "passed": true
+    },
+    {
+      "name": "Leitura sem JS",
+      "passed": true
+    },
+    {
+      "name": "Storage bloqueado mantém leitura e estado em memória",
+      "passed": true
+    },
+    {
+      "name": "Curso abre em file://",
+      "passed": true
+    },
+    {
+      "name": "Sem exceções JavaScript",
+      "passed": true
+    }
+  ],
+  "links": 394,
+  "svgs": 53,
+  "topics": 48,
+  "contrast": [
+    {
+      "theme": "inema-dark",
+      "key": "text",
+      "ratio": 14.21370226439167
+    },
+    {
+      "theme": "inema-dark",
+      "key": "muted",
+      "ratio": 9.073664171316018
+    },
+    {
+      "theme": "claro",
+      "key": "text",
+      "ratio": 17.40432753274219
+    },
+    {
+      "theme": "claro",
+      "key": "muted",
+      "ratio": 7.557378129674007
+    },
+    {
+      "theme": "sepia",
+      "key": "text",
+      "ratio": 7.312853702994165
+    },
+    {
+      "theme": "sepia",
+      "key": "muted",
+      "ratio": 6.022494171029809
+    },
+    {
+      "theme": "foco",
+      "key": "text",
+      "ratio": 17.40432753274219
+    },
+    {
+      "theme": "foco",
+      "key": "muted",
+      "ratio": 7.557378129674007
+    },
+    {
+      "theme": "contraste",
+      "key": "text",
+      "ratio": 18.020649074041927
+    },
+    {
+      "theme": "contraste",
+      "key": "muted",
+      "ratio": 9.892281387035021
+    }
+  ],
+  "errors": []
+}

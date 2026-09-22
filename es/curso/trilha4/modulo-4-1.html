@@ -1,0 +1,958 @@
+<!DOCTYPE html>
+<html class="dark" lang="es">
+<head>
+<script>
+(function () {
+  try {
+    var html = document.documentElement;
+    var DEF = { theme: 'inema-dark', font: 'inter', fontScale: 100, lineWidth: 68, leading: 1.7, accent: 'emerald' };
+    function clone(o) { var r = {}; for (var x in o) r[x] = o[x]; return r; }
+    var p = clone(DEF);
+    try {
+      var raw = localStorage.getItem('inema.prefs');
+      if (raw) {
+        var parsed = JSON.parse(raw);
+        if (parsed && typeof parsed === 'object') {
+          for (var k in DEF) if (parsed[k] != null) p[k] = parsed[k];
+        }
+      } else {
+        // fallback ao tema legado do v1
+        var legacy = localStorage.getItem('theme');
+        if (legacy === 'light') p.theme = 'claro';
+        else if (legacy === 'dark') p.theme = 'inema-dark';
+      }
+    } catch (e) { p = clone(DEF); }
+
+    // mapa tema -> (.dark on/off, data-theme, color-scheme)
+    var THEMES = {
+      'inema-dark': { dark: true,  attr: null,        cs: 'dark'  },
+      'claro':      { dark: false, attr: null,        cs: 'light' },
+      'sepia':      { dark: false, attr: 'sepia',     cs: 'light' },
+      'foco':       { dark: null,  attr: 'foco',      cs: null    },  // herda eixo atual
+      'contraste':  { dark: true,  attr: 'contraste', cs: 'dark'  }
+    };
+    var t = THEMES[p.theme] || THEMES['inema-dark'];
+
+    if (t.dark === true) html.classList.add('dark');
+    else if (t.dark === false) html.classList.remove('dark');
+    // 'foco' (null) preserva o que ja houver no atributo class do <html>
+
+    if (t.attr) html.setAttribute('data-theme', t.attr);
+    else html.removeAttribute('data-theme');
+
+    html.style.colorScheme = (t.cs ? t.cs : (html.classList.contains('dark') ? 'dark' : 'light'));
+
+    html.setAttribute('data-font', p.font || 'inter');
+    html.setAttribute('data-accent', p.accent || 'emerald');
+
+    // variaveis de leitura (espelham learn.js / learn.css) ANTES do paint
+    var s = html.style;
+    var scale = (+p.fontScale || 100);
+    s.setProperty('--inema-font-scale', (scale / 100).toString());
+    s.setProperty('font-size', scale + '%');               // :root em %, nunca px
+    s.setProperty('--measure', (+p.lineWidth || 68) + 'ch');
+    s.setProperty('--lh-body', (+p.leading || 1.7).toString());
+    var fam = p.font === 'system'
+      ? 'system-ui, -apple-system, "Segoe UI", Roboto, sans-serif'
+      : (p.font === 'leitura'
+        ? '"Atkinson Hyperlegible", "Inter", system-ui, sans-serif'
+        : '"Inter", system-ui, sans-serif');
+    s.setProperty('--font-body', fam);
+
+    var ACC = {
+      emerald: [152, 76, 45], blue: [217, 91, 60], purple: [258, 90, 66],
+      amber: [38, 92, 50], teal: [174, 72, 41], rose: [350, 89, 60]
+    };
+    var a = ACC[p.accent] || ACC.emerald;
+    s.setProperty('--accent-h', a[0] + '');
+    s.setProperty('--accent-s', a[1] + '%');
+    s.setProperty('--accent-l', a[2] + '%');
+    s.setProperty('--accent', 'hsl(' + a[0] + ' ' + a[1] + '% ' + a[2] + '%)');
+  } catch (err) {
+    // qualquer falha => default dark, preserva a marca
+    try { document.documentElement.classList.add('dark'); document.documentElement.style.colorScheme = 'dark'; } catch (e) {}
+  }
+})();
+</script>
+<meta charset="utf-8"/>
+<meta content="width=device-width, initial-scale=1" name="viewport"/>
+<title>Comparar calidad, costo y esfuerzo | Agent Skills · INEMA</title>
+<meta content="Curso completo de habilidades en Codex: ingeniería inversa, gatillos, libertad, verificación, costo y mejora continua. Formato INEMA v2." name="description"/>
+<meta content="agent-skills-codex-es" name="inema-course"/>
+<meta content="../../" name="course-root"/>
+<script data-inema-manifest="" type="application/json">{"course": "agent-skills-codex-es", "tracks": [{"n": "1", "title": "Fundamentos", "modules": [{"id": "1-1", "title": "Entiende qué enseña una skill", "topics": 6, "href": "curso/trilha1/modulo-1-1.html"}, {"id": "1-2", "title": "Empieza por el resultado aprobado", "topics": 6, "href": "curso/trilha1/modulo-1-2.html"}]}, {"n": "2", "title": "Construcción", "modules": [{"id": "2-1", "title": "Construye una skill con un trabajo claro", "topics": 6, "href": "curso/trilha2/modulo-2-1.html"}, {"id": "2-2", "title": "Ajusta la libertad del agente", "topics": 6, "href": "curso/trilha2/modulo-2-2.html"}]}, {"n": "3", "title": "Verificación", "modules": [{"id": "3-1", "title": "Verifica con evidencias", "topics": 6, "href": "curso/trilha3/modulo-3-1.html"}, {"id": "3-2", "title": "Haz una revisión visual de verdad", "topics": 6, "href": "curso/trilha3/modulo-3-2.html"}]}, {"n": "4", "title": "Evolución", "modules": [{"id": "4-1", "title": "Compara calidad, costo y esfuerzo", "topics": 6, "href": "curso/trilha4/modulo-4-1.html"}, {"id": "4-2", "title": "Evoluciona y entrega tu primera skill", "topics": 6, "href": "curso/trilha4/modulo-4-2.html"}]}]}</script>
+<link href="../../assets/favicon.svg" rel="icon" type="image/svg+xml"/>
+<link href="../../assets/course.css" rel="stylesheet"/>
+<link href="../../assets/learn.css" rel="stylesheet"/>
+<link href="../../assets/patches.css" rel="stylesheet"/>
+<link href="https://inematds.github.io/agent-skills/curso/trilha4/modulo-4-1.html" hreflang="pt-BR" rel="alternate"/><link href="https://inematds.github.io/agent-skills/en/curso/trilha4/modulo-4-1.html" hreflang="en" rel="alternate"/><link href="https://inematds.github.io/agent-skills/es/curso/trilha4/modulo-4-1.html" hreflang="es" rel="alternate"/><link href="https://inematds.github.io/agent-skills/curso/trilha4/modulo-4-1.html" hreflang="x-default" rel="alternate"/><link href="https://inematds.github.io/agent-skills/es/curso/trilha4/modulo-4-1.html" rel="canonical"/><style id="course-language-css">[data-course-languages]{position:fixed;bottom:0;left:0;right:0;z-index:60;display:flex;gap:1.25rem;padding:.65rem;justify-content:center;background:#111827;color:#f3f4f6}[data-course-languages] a{color:inherit;font:14px system-ui}[data-course-languages] [aria-current]{font-weight:bold;text-decoration:underline}[data-course-languages] a:focus-visible{outline:2px solid #38bdf8;outline-offset:4px}body{padding-bottom:75px}</style></head>
+<body class="track-4">
+<a class="skip" href="#conteudo">Saltar al contenido</a>
+<nav aria-label="Navegación principal" class="site-nav">
+<div class="wrap nav-row">
+<a aria-label="Agent Skills, inicio" class="brand" href="../../index.html">
+<svg aria-hidden="true" fill="none" viewbox="0 0 32 32">
+<path d="m11 7-8 9 8 9M21 7l8 9-8 9M18 4l-4 24" stroke="currentColor" stroke-width="2.5"></path>
+</svg>
+<span class="brand-name">AGENT SKILLS</span>
+</a>
+<a class="text-sky-400" href="https://inema.club" rel="noopener" target="_blank">INEMA.CLUB</a>
+<div class="nav-links">
+<a class="" href="../../curso/trilha1/index.html">
+<span class="nav-full">Fundamentos</span>
+<span class="nav-short">T1</span>
+</a>
+<a class="" href="../../curso/trilha2/index.html">
+<span class="nav-full">Construcción</span>
+<span class="nav-short">T2</span>
+</a>
+<a class="" href="../../curso/trilha3/index.html">
+<span class="nav-full">Verificación</span>
+<span class="nav-short">T3</span>
+</a>
+<a aria-current="page" class="active" href="../../curso/trilha4/index.html">
+<span class="nav-full">Evolución</span>
+<span class="nav-short">T4</span>
+</a>
+</div>
+<button aria-label="Alternar tema claro y oscuro" class="theme-toggle" id="theme-toggle">
+<svg aria-hidden="true" fill="none" viewbox="0 0 24 24">
+<circle cx="12" cy="12" r="4" stroke="currentColor" stroke-width="1.6"></circle>
+<path d="M12 1v3m0 16v3M1 12h3m16 0h3M4 4l2 2m12 12 2 2M4 20l2-2M18 6l2-2" stroke="currentColor" stroke-width="1.6"></path>
+</svg>
+</button>
+</div>
+</nav>
+<div class="wrap studybar">
+<div class="tools">
+<button data-inema-journey-open="">Mi recorrido</button>
+<button data-course-resume="">Continuar leyendo</button>
+<div class="appearance-wrap">
+<button aria-controls="appearance" aria-expanded="false" data-inema-appearance-toggle="#appearance">Apariencia</button>
+<div class="inema-appearance-pop" data-inema-appearance="" data-open="false" id="appearance">
+<h3>Tema</h3>
+<div class="inema-segment">
+<button aria-pressed="false" data-inema-set-theme="inema-dark">Oscuro</button>
+<button aria-pressed="false" data-inema-set-theme="claro">Claro</button>
+<button aria-pressed="false" data-inema-set-theme="sepia">Sepia</button>
+<button aria-pressed="false" data-inema-set-theme="foco">Enfoque</button>
+<button aria-pressed="false" data-inema-set-theme="contraste">Alto contraste</button>
+</div>
+<h3>Fuente</h3>
+<div class="inema-segment">
+<button aria-pressed="false" data-inema-set-font="inter">Inter / sistema</button>
+<button aria-pressed="false" data-inema-set-font="system">Sistema</button>
+<button aria-pressed="false" data-inema-set-font="leitura">Lectura</button>
+</div>
+<h3>Tamaño</h3>
+<div class="inema-segment">
+<button aria-pressed="false" data-inema-set-fontscale="100">100%</button>
+<button aria-pressed="false" data-inema-set-fontscale="112">112%</button>
+<button aria-pressed="false" data-inema-set-fontscale="125">125%</button>
+</div>
+<h3>Ancho de texto</h3>
+<div class="inema-segment">
+<button aria-pressed="false" data-inema-set-linewidth="60">Estrecha</button>
+<button aria-pressed="false" data-inema-set-linewidth="68">Media</button>
+<button aria-pressed="false" data-inema-set-linewidth="75">Ancha</button>
+</div>
+<h3>Interlineado</h3>
+<div class="inema-segment">
+<button aria-pressed="false" data-inema-set-leading="1.45">Compacta</button>
+<button aria-pressed="false" data-inema-set-leading="1.7">Cómoda</button>
+</div>
+<h3>Acento de los controles</h3>
+<div class="inema-segment">
+<button aria-pressed="false" data-inema-set-accent="emerald">Verde</button>
+<button aria-pressed="false" data-inema-set-accent="blue">Azul</button>
+<button aria-pressed="false" data-inema-set-accent="purple">Púrpura</button>
+<button aria-pressed="false" data-inema-set-accent="amber">Ámbar</button>
+<button aria-pressed="false" data-inema-set-accent="teal">Turquesa</button>
+<button aria-pressed="false" data-inema-set-accent="rose">Rosa</button>
+</div>
+</div>
+</div>
+</div>
+<div aria-label="Progreso de lectura" aria-valuemax="100" aria-valuemin="0" aria-valuenow="0" class="meter" data-inema-meter="curso" role="progressbar">
+<div class="meter-top">
+<span data-inema-meter-frac="">0 de 0</span>
+<span data-inema-meter-pct="">0%</span>
+</div>
+<div class="inema-bar">
+<div data-inema-meter-fill="">
+</div>
+</div>
+</div>
+</div>
+<noscript>
+<p class="wrap no-script">Puedes leer todas las lecciones sin JavaScript. El progreso, las notas y los controles de apariencia necesitan JavaScript.</p>
+</noscript>
+<main class="wrap" id="conteudo">
+<div class="breadcrumb">
+<a href="../../index.html">Inicio</a> / <a href="index.html">Evolución</a> / Módulo 4.1</div>
+<header class="hero">
+<span class="pill">MÓDULO 4.1</span>
+<h1>Compara calidad, costo y esfuerzo</h1>
+<p class="lead">Haz el walk it down con casos equivalentes y decisiones sustentadas por resultados.</p>
+<p>
+<strong>Al final:</strong> Planear una comparación justa y calcular el costo por entrega aceptada.</p>
+</header>
+<div class="stats">
+<div class="stat">
+<strong>6</strong>
+<span>tópicos</span>
+</div>
+<div class="stat">
+<strong>55 min</strong>
+<span>estimación con práctica</span>
+</div>
+<div class="stat">
+<strong>6</strong>
+<span>ejercicios comentados</span>
+</div>
+<div class="stat">
+<strong>1</strong>
+<span>verificación final</span>
+</div>
+</div>
+<div class="reading-layout">
+<aside aria-label="Índice del módulo" class="toc" data-inema-toc="">
+<h2>En este módulo</h2>
+<span data-inema-section-counter="">Sección 1 de 6</span>
+<ol>
+<li>
+<a href="#topico-1">1. Establece una configuración de referencia</a>
+</li>
+<li>
+<a href="#topico-2">2. Compara una variable a la vez</a>
+</li>
+<li>
+<a href="#topico-3">3. Elige casos que representen el trabajo real</a>
+</li>
+<li>
+<a href="#topico-4">4. Calcula el costo por entrega aceptada</a>
+</li>
+<li>
+<a href="#topico-5">5. Reduce el esfuerzo con una compuerta de calidad</a>
+</li>
+<li>
+<a href="#topico-6">6. Registra una decisión que se puede revisar</a>
+</li>
+</ol>
+<div aria-label="Progreso de lectura" aria-valuemax="100" aria-valuemin="0" aria-valuenow="0" class="meter" data-inema-meter="modulo:4-1" role="progressbar">
+<div class="meter-top">
+<span data-inema-meter-frac="">0 de 0</span>
+<span data-inema-meter-pct="">0%</span>
+</div>
+<div class="inema-bar">
+<div data-inema-meter-fill="">
+</div>
+</div>
+</div>
+<p class="muted">Selecciona un fragmento de las explicaciones para resaltarlo o tomar notas.</p>
+</aside>
+<article class="lesson-content" data-inema-module="4-1" data-inema-track="4">
+<section class="lesson" data-inema-topic="modulo-4-1#topico-1" id="topico-1">
+<div class="lesson-head">
+<span class="circle">1</span>
+<h2>Establece una configuración de referencia</h2>
+</div>
+<figure class="diagram">
+<div aria-label="Diagrama con desplazamiento horizontal en pantallas pequeñas" class="diagram-scroll" role="region" tabindex="0">
+<svg aria-label="Skill estable → Casos fijos → Configuración A → Referencia medida" class="w-full h-auto" role="img" viewbox="0 0 720 200">
+<defs>
+<pattern height="24" id="d4-1-1-grid" patternunits="userSpaceOnUse" width="24">
+<circle cx="2" cy="2" fill="#fbbf24" opacity=".13" r="1"></circle>
+</pattern>
+<filter id="d4-1-1-glow">
+<fegaussianblur result="b" stddeviation="1.8"></fegaussianblur>
+<femerge>
+<femergenode in="b"></femergenode>
+<femergenode in="SourceGraphic"></femergenode>
+</femerge>
+</filter>
+<marker id="d4-1-1-arrow" markerheight="7" markerwidth="7" orient="auto" refx="6" refy="3.5">
+<path d="M0 0 7 3.5 0 7" fill="#fbbf24"></path>
+</marker>
+</defs>
+<rect fill="#0f172a" height="200" width="720"></rect>
+<rect fill="url(#d4-1-1-grid)" height="200" width="720"></rect>
+<path d="M179 65 H192 V91 H197" fill="none" marker-end="url(#d4-1-1-arrow)" opacity=".6" stroke="#fbbf24" stroke-width="1.8"></path>
+<g>
+<rect fill="#111827" filter="url(#d4-1-1-glow)" height="72" rx="10" stroke="#fbbf24" stroke-width="2" width="150" x="25" y="25"></rect>
+<text fill="#e5e7eb" font-size="14" font-weight="600" text-anchor="middle" x="100.0" y="66.0">Skill estable</text>
+</g>
+<path d="M354 91 H367 V117 H372" fill="none" marker-end="url(#d4-1-1-arrow)" opacity=".6" stroke="#fbbf24" stroke-width="1.8"></path>
+<g>
+<rect fill="#111827" height="72" rx="10" stroke="#38bdf8" stroke-width="2" width="150" x="200" y="51"></rect>
+<text fill="#e5e7eb" font-size="14" font-weight="600" text-anchor="middle" x="275.0" y="92.0">Casos fijos</text>
+</g>
+<path d="M529 117 H542 V143 H547" fill="none" marker-end="url(#d4-1-1-arrow)" opacity=".6" stroke="#fbbf24" stroke-width="1.8"></path>
+<g>
+<rect fill="#111827" height="72" rx="10" stroke="#38bdf8" stroke-width="2" width="150" x="375" y="77"></rect>
+<text fill="#e5e7eb" font-size="14" font-weight="600" text-anchor="middle" x="450.0" y="118.0">Configuración A</text>
+</g>
+<g>
+<rect fill="#111827" height="72" rx="10" stroke="#38bdf8" stroke-width="2" width="150" x="550" y="103"></rect>
+<text fill="#e5e7eb" font-size="14" font-weight="600" text-anchor="middle" x="625.0" y="144.0">Referencia medida</text>
+</g>
+</svg>
+</div>
+<figcaption>Primero demuestra que la tarea es ejecutable; luego busca una configuración más económica.</figcaption>
+</figure>
+<div class="inema-prose">
+<h3>Qué es</h3>
+<p data-inema-block="m4-1-t1-p1" id="m4-1-t1-p1">El walk it down comienza con una configuración capaz de cumplir la tarea. Registra modelo, esfuerzo disponible, herramientas, versión de la skill y casos usados. Esa es la referencia con la que se compararán alternativas más ligeras.</p>
+<h3>Por qué aprender</h3>
+<p data-inema-block="m4-1-t1-p2" id="m4-1-t1-p2">Sin una línea de base no sabes si la caída de calidad provino de la configuración, de los datos o de la instrucción. Los nombres y resultados citados en el video son ejemplos de ese experimento, no una jerarquía de precios o desempeño garantizada.</p>
+<h3>Conceptos clave</h3>
+</div>
+<div class="key-grid">
+<div class="key">
+<strong>Línea base</strong>configuración que pasó.</div>
+<div class="key">
+<strong>Versión</strong>instrucción congelada.</div>
+<div class="key">
+<strong>Entorno</strong>mismas herramientas.</div>
+<div class="key">
+<strong>Registro</strong>costo, tiempo y calidad observados.</div>
+</div>
+<div class="code-box">
+<div class="code-head">
+<span>EJEMPLO COMENTADO · 4.1.1</span>
+<button data-copy="code-4-1-1">Copiar ejemplo</button>
+</div>
+<pre id="code-4-1-1">
+<code>Experimento E01
+Skill: versión 1.0.0
+Casos: C01 a C08
+Modelo: identificador disponible en tu cuenta
+Esfuerzo: valor soportado por la interfaz
+Registrar: aprobación, tiempo, consumo y retrabajo.</code>
+</pre>
+</div>
+<div class="comparison">
+<div class="compare-good">
+<h3>✓ Haz así</h3>
+<p>Usa nombres y opciones que estén realmente disponibles en el entorno.</p>
+</div>
+<div class="compare-bad">
+<h3>✗ Evita este error</h3>
+<p>Fija en el curso precios o menús que puedan cambiar.</p>
+</div>
+</div>
+<aside class="tip">
+<strong>Llévalo a tu skill.</strong> Primero demuestre que la tarea es ejecutable; después busque una configuración más económica. Use este principio para revisar el ejemplo antes de avanzar.</aside>
+<div class="practice">
+<h3>Practica antes de revelar</h3>
+<p>¿Qué información falta en “el modelo B fue más rápido”?</p>
+<details>
+<summary>Ver respuesta comentada</summary>
+<p>Casos, número de ejecuciones, criterios de aceptación, herramientas, esfuerzo y variación de tiempo. Una afirmación comparativa precisa necesita estas condiciones.</p>
+</details>
+</div>
+<div class="read-controls">
+<button aria-pressed="false" data-inema-read-toggle="">
+<span aria-hidden="true">✓</span>
+<span data-inema-read-label="">Marcar como leído</span>
+</button>
+<button aria-pressed="false" data-inema-doubt-toggle="">Tengo una duda</button>
+</div>
+</section>
+<section class="lesson" data-inema-topic="modulo-4-1#topico-2" id="topico-2">
+<div class="lesson-head">
+<span class="circle">2</span>
+<h2>Compara una variable a la vez</h2>
+</div>
+<figure class="diagram">
+<div aria-label="Diagrama con desplazamiento horizontal en pantallas pequeñas" class="diagram-scroll" role="region" tabindex="0">
+<svg aria-label="Modelo A → Mismos casos → Modelo B → Misma rúbrica" class="w-full h-auto" role="img" viewbox="0 0 720 200">
+<defs>
+<pattern height="24" id="d4-1-2-grid" patternunits="userSpaceOnUse" width="24">
+<circle cx="2" cy="2" fill="#fbbf24" opacity=".13" r="1"></circle>
+</pattern>
+<filter id="d4-1-2-glow">
+<fegaussianblur result="b" stddeviation="1.8"></fegaussianblur>
+<femerge>
+<femergenode in="b"></femergenode>
+<femergenode in="SourceGraphic"></femergenode>
+</femerge>
+</filter>
+<marker id="d4-1-2-arrow" markerheight="7" markerwidth="7" orient="auto" refx="6" refy="3.5">
+<path d="M0 0 7 3.5 0 7" fill="#fbbf24"></path>
+</marker>
+</defs>
+<rect fill="#0f172a" height="200" width="720"></rect>
+<rect fill="url(#d4-1-2-grid)" height="200" width="720"></rect>
+<path d="M170 137 H182 V110 H192" fill="none" marker-end="url(#d4-1-2-arrow)" opacity=".6" stroke="#fbbf24" stroke-width="1.8"></path>
+<g>
+<rect fill="#111827" filter="url(#d4-1-2-glow)" height="62" rx="10" stroke="#fbbf24" stroke-width="2" width="150" x="20" y="105"></rect>
+<text fill="#e5e7eb" font-size="14" font-weight="600" text-anchor="middle" x="95.0" y="141.0">Modelo A</text>
+</g>
+<path d="M345 110 H357 V83 H367" fill="none" marker-end="url(#d4-1-2-arrow)" opacity=".6" stroke="#fbbf24" stroke-width="1.8"></path>
+<g>
+<rect fill="#111827" height="62" rx="10" stroke="#38bdf8" stroke-width="2" width="150" x="195" y="78"></rect>
+<text fill="#e5e7eb" font-size="14" font-weight="600" text-anchor="middle" x="270.0" y="114.0">Mismos casos</text>
+</g>
+<path d="M520 83 H532 V56 H542" fill="none" marker-end="url(#d4-1-2-arrow)" opacity=".6" stroke="#fbbf24" stroke-width="1.8"></path>
+<g>
+<rect fill="#111827" height="62" rx="10" stroke="#38bdf8" stroke-width="2" width="150" x="370" y="51"></rect>
+<text fill="#e5e7eb" font-size="14" font-weight="600" text-anchor="middle" x="445.0" y="87.0">Modelo B</text>
+</g>
+<g>
+<rect fill="#111827" height="62" rx="10" stroke="#38bdf8" stroke-width="2" width="150" x="545" y="24"></rect>
+<text fill="#e5e7eb" font-size="14" font-weight="600" text-anchor="middle" x="620.0" y="60.0">Misma rúbrica</text>
+</g>
+</svg>
+</div>
+<figcaption>La comparación es justa cuando los candidatos enfrentan las mismas condiciones relevantes.</figcaption>
+</figure>
+<div class="inema-prose">
+<h3>Qué es</h3>
+<p data-inema-block="m4-1-t2-p1" id="m4-1-t2-p1">Mantén los casos, la skill y la rúbrica iguales al cambiar el modelo. Después de elegir un candidato, prueba otro nivel de esfuerzo si la interfaz ofrece ese control. No asumas que todos los modelos aceptan las mismas opciones.</p>
+<h3>Por qué aprender</h3>
+<p data-inema-block="m4-1-t2-p2" id="m4-1-t2-p2">Cambiar simultáneamente modelo, prompt y herramienta impide atribuir la diferencia a una causa. Una comparación simple y controlada vale más que una gran planilla llena de condiciones incompatibles.</p>
+<h3>Conceptos clave</h3>
+</div>
+<div class="key-grid">
+<div class="key">
+<strong>Variable independiente</strong>que cambia.</div>
+<div class="key">
+<strong>Controles</strong>lo que permanece.</div>
+<div class="key">
+<strong>Repeticiones</strong>variación entre ejecuciones.</div>
+<div class="key">
+<strong>Orden</strong>alternar para reducir efectos de momento.</div>
+</div>
+<div class="code-box">
+<div class="code-head">
+<span>EJEMPLO COMENTADO · 4.1.2</span>
+<button data-copy="code-4-1-2">Copiar ejemplo</button>
+</div>
+<pre id="code-4-1-2">
+<code>Ronda 1: modelo A vs B, esfuerzo equivalente cuando sea posible.
+Ronda 2: mejor candidato, esfuerzo alto vs medio.
+Ronda 3: validar la elección en casos reservados.
+Si las opciones no son equivalentes, registrar la diferencia.</code>
+</pre>
+</div>
+<div class="timeline">
+<h3>Del concepto a la acción</h3>
+<ol>
+<li>Modelo A: identificar la condición inicial.</li>
+<li>Mismos casos: aplicar la decisión descrita.</li>
+<li>Modelo B: comprobar el efecto en el ejemplo.</li>
+<li>Misma rúbrica: registrar la evidencia de salida.</li>
+</ol>
+</div>
+<div class="comparison">
+<div class="compare-good">
+<h3>✓ Haz así</h3>
+<p>Mantén las entradas congeladas durante la comparación.</p>
+</div>
+<div class="compare-bad">
+<h3>✗ Evita este error</h3>
+<p>Mejorar la skill solo para un candidato y llamar a la prueba justa.</p>
+</div>
+</div>
+<div class="practice">
+<h3>Practica antes de revelar</h3>
+<p>Cambiaste el prompt para ayudar a B. ¿Qué hacer antes de comparar?</p>
+<details>
+<summary>Ver respuesta comentada</summary>
+<p>Ejecutar nuevamente A con la misma versión de la skill, o declarar que son dos sistemas diferentes. Lo importante es no atribuirle al modelo un cambio de instrucción.</p>
+</details>
+</div>
+<div class="read-controls">
+<button aria-pressed="false" data-inema-read-toggle="">
+<span aria-hidden="true">✓</span>
+<span data-inema-read-label="">Marcar como leído</span>
+</button>
+<button aria-pressed="false" data-inema-doubt-toggle="">Tengo una duda</button>
+</div>
+</section>
+<section class="lesson" data-inema-topic="modulo-4-1#topico-3" id="topico-3">
+<div class="lesson-head">
+<span class="circle">3</span>
+<h2>Elige casos que representen el trabajo real</h2>
+</div>
+<figure class="diagram">
+<div aria-label="Diagrama con desplazamiento horizontal en pantallas pequeñas" class="diagram-scroll" role="region" tabindex="0">
+<svg aria-label="Pantalla → Voz → Gráficos → Casos reservados" class="w-full h-auto" role="img" viewbox="0 0 720 200">
+<defs>
+<pattern height="24" id="d4-1-3-grid" patternunits="userSpaceOnUse" width="24">
+<circle cx="2" cy="2" fill="#fbbf24" opacity=".13" r="1"></circle>
+</pattern>
+<filter id="d4-1-3-glow">
+<fegaussianblur result="b" stddeviation="1.8"></fegaussianblur>
+<femerge>
+<femergenode in="b"></femergenode>
+<femergenode in="SourceGraphic"></femergenode>
+</femerge>
+</filter>
+<marker id="d4-1-3-arrow" markerheight="7" markerwidth="7" orient="auto" refx="6" refy="3.5">
+<path d="M0 0 7 3.5 0 7" fill="#fbbf24"></path>
+</marker>
+</defs>
+<rect fill="#0f172a" height="200" width="720"></rect>
+<rect fill="url(#d4-1-3-grid)" height="200" width="720"></rect>
+<path d="M225 100 C310 100 315 34 365 34" fill="none" marker-end="url(#d4-1-3-arrow)" opacity=".6" stroke="#fbbf24" stroke-width="1.8"></path>
+<path d="M225 100 C310 100 315 100 365 100" fill="none" marker-end="url(#d4-1-3-arrow)" opacity=".6" stroke="#fbbf24" stroke-width="1.8"></path>
+<path d="M225 100 C310 100 315 166 365 166" fill="none" marker-end="url(#d4-1-3-arrow)" opacity=".6" stroke="#fbbf24" stroke-width="1.8"></path>
+<g>
+<rect fill="#111827" filter="url(#d4-1-3-glow)" height="70" rx="10" stroke="#fbbf24" stroke-width="2" width="205" x="20" y="65"></rect>
+<text fill="#e5e7eb" font-size="14" font-weight="600" text-anchor="middle" x="122.5" y="105.0">Pantalla</text>
+</g>
+<g>
+<rect fill="#111827" height="48" rx="10" stroke="#38bdf8" stroke-width="2" width="325" x="370" y="10"></rect>
+<text fill="#e5e7eb" font-size="14" font-weight="600" text-anchor="middle" x="532.5" y="39.0">Habla</text>
+</g>
+<g>
+<rect fill="#111827" height="48" rx="10" stroke="#38bdf8" stroke-width="2" width="325" x="370" y="76"></rect>
+<text fill="#e5e7eb" font-size="14" font-weight="600" text-anchor="middle" x="532.5" y="105.0">Gráficos</text>
+</g>
+<g>
+<rect fill="#111827" height="48" rx="10" stroke="#38bdf8" stroke-width="2" width="325" x="370" y="142"></rect>
+<text fill="#e5e7eb" font-size="14" font-weight="600" text-anchor="middle" x="532.5" y="171.0">Casos reservados</text>
+</g>
+</svg>
+</div>
+<figcaption>La muestra debe reflejar lo que recibes, incluidos los casos difíciles que no entran en el promedio.</figcaption>
+</figure>
+<div class="inema-prose">
+<h3>Qué es</h3>
+<p data-inema-block="m4-1-t3-p1" id="m4-1-t3-p1">En el estudio visual del video, un candidato fue mejor en ciertos recortes y peor en otros. Para descubrir qué sirve a tu trabajo, incluye ejemplos de naturalezas diferentes: demostración de pantalla, voz con pocas imágenes y contenido con gráficos.</p>
+<h3>Por qué aprender</h3>
+<p data-inema-block="m4-1-t3-p2" id="m4-1-t3-p2">Un solo ejemplo favorece las coincidencias. Repite casos importantes y examina dónde falla la configuración, no solo tu promedio. Una tasa alta de aprobación puede ocultar un error grave en un tipo raro, pero esencial.</p>
+<h3>Conceptos clave</h3>
+</div>
+<div class="key-grid">
+<div class="key">
+<strong>Diversidad</strong>de tipos de entrada.</div>
+<div class="key">
+<strong>Repetición</strong>inestabilidad de salida.</div>
+<div class="key">
+<strong>Estratificación</strong>resultados por categoría.</div>
+<div class="key">
+<strong>Caso reservado</strong>prueba fuera del ajuste.</div>
+</div>
+<div class="code-box">
+<div class="code-head">
+<span>EJEMPLO COMENTADO · 4.1.3</span>
+<button data-copy="code-4-1-3">Copiar ejemplo</button>
+</div>
+<pre id="code-4-1-3">
+<code>Informe: normal, vacío, campo ausente, valor inválido.
+Artículo: tutorial, entrevista, presentación con gráficos.
+Repetir los casos con mayor riesgo y guardar resultados brutos.</code>
+</pre>
+</div>
+<div class="comparison">
+<div class="compare-good">
+<h3>✓ Haz así</h3>
+<p>Divulgue el tamaño de la muestra junto con la tasa de aprobación.</p>
+</div>
+<div class="compare-bad">
+<h3>✗ Evita este error</h3>
+<p>Generalizar el desempeño de una tarea para todas las skills.</p>
+</div>
+</div>
+<div class="practice">
+<h3>Practica antes de revelar</h3>
+<p>Una configuración pasa en 9 de 10 casos, pero inventa valor en el décimo. ¿Puede ganar por el promedio?</p>
+<details>
+<summary>Ver respuesta comentada</summary>
+<p>No inventar valores es bloqueante. La política de aceptación debe aplicarse antes de comparar el costo; el promedio no compensa una falla crítica.</p>
+</details>
+</div>
+<div class="read-controls">
+<button aria-pressed="false" data-inema-read-toggle="">
+<span aria-hidden="true">✓</span>
+<span data-inema-read-label="">Marcar como leído</span>
+</button>
+<button aria-pressed="false" data-inema-doubt-toggle="">Tengo una duda</button>
+</div>
+</section>
+<section class="lesson" data-inema-topic="modulo-4-1#topico-4" id="topico-4">
+<div class="lesson-head">
+<span class="circle">4</span>
+<h2>Calcule el costo por entrega aceptada</h2>
+</div>
+<figure class="diagram">
+<div aria-label="Diagrama con desplazamiento horizontal en pantallas pequeñas" class="diagram-scroll" role="region" tabindex="0">
+<svg aria-label="Intentos → Costo acumulado → Entregas aceptadas → Costo efectivo" class="w-full h-auto" role="img" viewbox="0 0 720 200">
+<defs>
+<pattern height="24" id="d4-1-4-grid" patternunits="userSpaceOnUse" width="24">
+<circle cx="2" cy="2" fill="#fbbf24" opacity=".13" r="1"></circle>
+</pattern>
+<filter id="d4-1-4-glow">
+<fegaussianblur result="b" stddeviation="1.8"></fegaussianblur>
+<femerge>
+<femergenode in="b"></femergenode>
+<femergenode in="SourceGraphic"></femergenode>
+</femerge>
+</filter>
+<marker id="d4-1-4-arrow" markerheight="7" markerwidth="7" orient="auto" refx="6" refy="3.5">
+<path d="M0 0 7 3.5 0 7" fill="#fbbf24"></path>
+</marker>
+</defs>
+<rect fill="#0f172a" height="200" width="720"></rect>
+<rect fill="url(#d4-1-4-grid)" height="200" width="720"></rect>
+<path d="M175 100 H193" fill="none" marker-end="url(#d4-1-4-arrow)" opacity=".6" stroke="#fbbf24" stroke-width="1.8"></path>
+<g>
+<rect fill="#111827" filter="url(#d4-1-4-glow)" height="74" rx="10" stroke="#fbbf24" stroke-width="2" width="150" x="20" y="63"></rect>
+<text fill="#e5e7eb" font-size="14" font-weight="600" text-anchor="middle" x="95.0" y="105.0">Intentos</text>
+</g>
+<path d="M350 100 H368" fill="none" marker-end="url(#d4-1-4-arrow)" opacity=".6" stroke="#fbbf24" stroke-width="1.8"></path>
+<g>
+<rect fill="#111827" height="74" rx="10" stroke="#38bdf8" stroke-width="2" width="150" x="195" y="63"></rect>
+<text fill="#e5e7eb" font-size="14" font-weight="600" text-anchor="middle" x="270.0" y="105.0">Costo acumulado</text>
+</g>
+<path d="M525 100 H543" fill="none" marker-end="url(#d4-1-4-arrow)" opacity=".6" stroke="#fbbf24" stroke-width="1.8"></path>
+<g>
+<rect fill="#111827" height="74" rx="10" stroke="#38bdf8" stroke-width="2" width="150" x="370" y="63"></rect>
+<text fill="#e5e7eb" font-size="14" font-weight="600" text-anchor="middle" x="445.0" y="105.0">Entregas aceptadas</text>
+</g>
+<g>
+<rect fill="#111827" height="74" rx="10" stroke="#38bdf8" stroke-width="2" width="150" x="545" y="63"></rect>
+<text fill="#e5e7eb" font-size="14" font-weight="600" text-anchor="middle" x="620.0" y="105.0">Costo efectivo</text>
+</g>
+</svg>
+</div>
+<figcaption>Los números son sintéticos y sirven para aprender a hacer la cuenta; no son precios de modelos.</figcaption>
+</figure>
+<div class="inema-prose">
+<h3>Qué es</h3>
+<p data-inema-block="m4-1-t4-p1" id="m4-1-t4-p1">El precio por llamada es solo una parte del costo. Incluye intentos y correcciones. En el ejemplo didáctico, A gasta 12 unidades para 10 entregas aceptadas; B gasta 8 para 5. A cuesta 1,20 por entrega aceptada y B cuesta 1,60.</p>
+<h3>Por qué aprender</h3>
+<p data-inema-block="m4-1-t4-p2" id="m4-1-t4-p2">La configuración nominalmente barata puede consumir más recursos por culpa del retrabajo. Registra el tiempo humano por separado o establece una forma explícita de monetizarlo. No mezcles costo de API con suscripción sin explicar el método.</p>
+<h3>Conceptos clave</h3>
+</div>
+<div class="key-grid">
+<div class="key">
+<strong>Costo total</strong>de todos los intentos relevantes.</div>
+<div class="key">
+<strong>Entregas aceptadas</strong>cumplieron el contrato.</div>
+<div class="key">
+<strong>Costo efectivo</strong>total dividido entre aceptadas.</div>
+<div class="key">
+<strong>Cero aceptadas</strong>el costo efectivo no es cero.</div>
+</div>
+<div class="code-box">
+<div class="code-head">
+<span>EJEMPLO COMENTADO · 4.1.4</span>
+<button data-copy="code-4-1-4">Copiar ejemplo</button>
+</div>
+<pre id="code-4-1-4">
+<code>A: 12 unidades / 10 aceptadas = 1,20 por aceptación
+B: 8 unidades / 5 aceptadas = 1,60 por aceptación
+Si aceptadas = 0: no existe costo finito por aceptación.
+Tiempo de revisión humana: registrar en una columna separada.</code>
+</pre>
+</div>
+<div class="comparison">
+<div class="compare-good">
+<h3>✓ Haz así</h3>
+<p>Sume el costo de los intentos que fallaron.</p>
+</div>
+<div class="compare-bad">
+<h3>✗ Evita este error</h3>
+<p>Excluir retries para que la alternativa parezca barata.</p>
+</div>
+</div>
+<aside class="tip">
+<strong>Llévalo a tu skill.</strong> Los números son sintéticos y sirven para aprender el cálculo; no son precios de modelos. Use este principio para revisar el ejemplo antes de avanzar.</aside>
+<div class="practice">
+<h3>Practica antes de revelar</h3>
+<p>Cuesta 9 unidades y aprueba 6 salidas. ¿Cuál es el costo por aceptación?</p>
+<details>
+<summary>Ver respuesta comentada</summary>
+<p>1,50 unidad por entrega aceptada. Solo compare con A y B si el criterio de calidad y el conjunto de casos fueran equivalentes.</p>
+</details>
+</div>
+<div class="read-controls">
+<button aria-pressed="false" data-inema-read-toggle="">
+<span aria-hidden="true">✓</span>
+<span data-inema-read-label="">Marcar como leído</span>
+</button>
+<button aria-pressed="false" data-inema-doubt-toggle="">Tengo una duda</button>
+</div>
+</section>
+<section aria-labelledby="calc-title" class="calc">
+<span class="eyebrow">SIMULADOR · NÚMEROS DIDÁCTICOS</span>
+<h2 id="calc-title">¿Cuánto cuesta cada entrega aceptada?</h2>
+<label>Costo total: <strong id="cost-value">12</strong> unidades<input id="cost" max="50" min="1" type="range" value="12"/>
+</label>
+<label>Entregas aceptadas: <strong id="accepted-value">10</strong>
+<input id="accepted" max="20" min="0" type="range" value="10"/>
+</label>
+<output aria-live="polite" id="effective">1,20 unidad por aceptación</output>
+<p class="muted">Incluya intentos fallidos en el costo. Esta simulación no consulta precios de servicios.</p>
+</section>
+<section class="lesson" data-inema-topic="modulo-4-1#topico-5" id="topico-5">
+<div class="lesson-head">
+<span class="circle">5</span>
+<h2>Reduzca el esfuerzo con una puerta de calidad</h2>
+</div>
+<figure class="diagram">
+<div aria-label="Diagrama con desplazamiento horizontal en pantallas pequeñas" class="diagram-scroll" role="region" tabindex="0">
+<svg aria-label="Referencia aprobada → Reducir esfuerzo → Reevaluar → Adoptar o volver" class="w-full h-auto" role="img" viewbox="0 0 720 200">
+<defs>
+<pattern height="24" id="d4-1-5-grid" patternunits="userSpaceOnUse" width="24">
+<circle cx="2" cy="2" fill="#fbbf24" opacity=".13" r="1"></circle>
+</pattern>
+<filter id="d4-1-5-glow">
+<fegaussianblur result="b" stddeviation="1.8"></fegaussianblur>
+<femerge>
+<femergenode in="b"></femergenode>
+<femergenode in="SourceGraphic"></femergenode>
+</femerge>
+</filter>
+<marker id="d4-1-5-arrow" markerheight="7" markerwidth="7" orient="auto" refx="6" refy="3.5">
+<path d="M0 0 7 3.5 0 7" fill="#fbbf24"></path>
+</marker>
+</defs>
+<rect fill="#0f172a" height="200" width="720"></rect>
+<rect fill="url(#d4-1-5-grid)" height="200" width="720"></rect>
+<path d="M170 137 H182 V110 H192" fill="none" marker-end="url(#d4-1-5-arrow)" opacity=".6" stroke="#fbbf24" stroke-width="1.8"></path>
+<g>
+<rect fill="#111827" filter="url(#d4-1-5-glow)" height="62" rx="10" stroke="#fbbf24" stroke-width="2" width="150" x="20" y="105"></rect>
+<text fill="#e5e7eb" font-size="14" font-weight="600" text-anchor="middle" x="95.0" y="141.0">Referencia aprobada</text>
+</g>
+<path d="M345 110 H357 V83 H367" fill="none" marker-end="url(#d4-1-5-arrow)" opacity=".6" stroke="#fbbf24" stroke-width="1.8"></path>
+<g>
+<rect fill="#111827" height="62" rx="10" stroke="#38bdf8" stroke-width="2" width="150" x="195" y="78"></rect>
+<text fill="#e5e7eb" font-size="14" font-weight="600" text-anchor="middle" x="270.0" y="114.0">Reducir esfuerzo</text>
+</g>
+<path d="M520 83 H532 V56 H542" fill="none" marker-end="url(#d4-1-5-arrow)" opacity=".6" stroke="#fbbf24" stroke-width="1.8"></path>
+<g>
+<rect fill="#111827" height="62" rx="10" stroke="#38bdf8" stroke-width="2" width="150" x="370" y="51"></rect>
+<text fill="#e5e7eb" font-size="14" font-weight="600" text-anchor="middle" x="445.0" y="87.0">Reevaluar</text>
+</g>
+<g>
+<rect fill="#111827" height="62" rx="10" stroke="#38bdf8" stroke-width="2" width="150" x="545" y="24"></rect>
+<text fill="#e5e7eb" font-size="14" font-weight="600" text-anchor="middle" x="620.0" y="60.0">Adoptar o volver</text>
+</g>
+</svg>
+</div>
+<figcaption>Baje solo un escalón más después de comprobar el efecto del escalón anterior.</figcaption>
+</figure>
+<div class="inema-prose">
+<h3>Qué es</h3>
+<p data-inema-block="m4-1-t5-p1" id="m4-1-t5-p1">Después de encontrar un modelo adecuado, prueba reducir el esfuerzo cuando exista ese control. La decisión depende de la calidad observada, del tiempo y del consumo. Más esfuerzo no es garantía de mejor resultado en toda tarea.</p>
+<h3>Por qué aprender</h3>
+<p data-inema-block="m4-1-t5-p2" id="m4-1-t5-p2">Una skill con reglas claras y script de cálculo puede requerir menos deliberación que una revisión visual compleja. La puerta de calidad impide que la economía elimine justamente la verificación que evita errores.</p>
+<h3>Conceptos clave</h3>
+</div>
+<div class="key-grid">
+<div class="key">
+<strong>Candidato</strong>configuración a probar.</div>
+<div class="key">
+<strong>Puerta</strong>criterios mínimos inmutables.</div>
+<div class="key">
+<strong>Aceptación</strong>demostrada en los casos.</div>
+<div class="key">
+<strong>Reversión</strong>volver a la referencia si falla.</div>
+</div>
+<div class="code-box">
+<div class="code-head">
+<span>EJEMPLO COMENTADO · 4.1.5</span>
+<button data-copy="code-4-1-5">Copiar ejemplo</button>
+</div>
+<pre id="code-4-1-5">
+<code>Configuración actual → pasa la suite.
+Menor esfuerzo → ejecutar la misma suite.
+¿Pasó sin regresiones relevantes? Comparar tiempo y costo.
+¿Falló? Volver a la referencia o investigar la skill.</code>
+</pre>
+</div>
+<div class="timeline">
+<h3>Del concepto a la acción</h3>
+<ol>
+<li>Referencia aprobada: identificar la condición inicial.</li>
+<li>Reducir esfuerzo: aplicar la decisión descrita.</li>
+<li>Reevaluar: comprobar el efecto en el ejemplo.</li>
+<li>Adoptar o volver: registrar la evidencia de salida.</li>
+</ol>
+</div>
+<div class="comparison">
+<div class="compare-good">
+<h3>✓ Haz así</h3>
+<p>Guarde la configuración anterior para una reversión.</p>
+</div>
+<div class="compare-bad">
+<h3>✗ Evita este error</h3>
+<p>Saltar la revisión para reducir tiempo y llamarlo optimización.</p>
+</div>
+</div>
+<div class="practice">
+<h3>Practica antes de revelar</h3>
+<p>La configuración ligera funciona en resumen, pero falla en recorte visual. ¿Qué sugiere?</p>
+<details>
+<summary>Ver respuesta comentada</summary>
+<p>Posiblemente dividir el flujo y usar configuraciones diferentes por etapa, si el entorno lo permite. La decisión necesita una nueva prueba integrada; separar etapas también agrega costo y complejidad.</p>
+</details>
+</div>
+<div class="read-controls">
+<button aria-pressed="false" data-inema-read-toggle="">
+<span aria-hidden="true">✓</span>
+<span data-inema-read-label="">Marcar como leído</span>
+</button>
+<button aria-pressed="false" data-inema-doubt-toggle="">Tengo una duda</button>
+</div>
+</section>
+<section class="lesson" data-inema-topic="modulo-4-1#topico-6" id="topico-6">
+<div class="lesson-head">
+<span class="circle">6</span>
+<h2>Registre una decisión que pueda revisarse</h2>
+</div>
+<figure class="diagram">
+<div aria-label="Diagrama con desplazamiento horizontal en pantallas pequeñas" class="diagram-scroll" role="region" tabindex="0">
+<svg aria-label="Resultados → Elección → Limitaciones → Reevaluar cuando cambie" class="w-full h-auto" role="img" viewbox="0 0 720 200">
+<defs>
+<pattern height="24" id="d4-1-6-grid" patternunits="userSpaceOnUse" width="24">
+<circle cx="2" cy="2" fill="#fbbf24" opacity=".13" r="1"></circle>
+</pattern>
+<filter id="d4-1-6-glow">
+<fegaussianblur result="b" stddeviation="1.8"></fegaussianblur>
+<femerge>
+<femergenode in="b"></femergenode>
+<femergenode in="SourceGraphic"></femergenode>
+</femerge>
+</filter>
+<marker id="d4-1-6-arrow" markerheight="7" markerwidth="7" orient="auto" refx="6" refy="3.5">
+<path d="M0 0 7 3.5 0 7" fill="#fbbf24"></path>
+</marker>
+</defs>
+<rect fill="#0f172a" height="200" width="720"></rect>
+<rect fill="url(#d4-1-6-grid)" height="200" width="720"></rect>
+<path d="M280 54 H414" fill="none" marker-end="url(#d4-1-6-arrow)" opacity=".6" stroke="#fbbf24" stroke-width="1.8"></path>
+<path d="M540 87 V110" fill="none" marker-end="url(#d4-1-6-arrow)" opacity=".6" stroke="#fbbf24" stroke-width="1.8"></path>
+<path d="M420 148 H287" fill="none" marker-end="url(#d4-1-6-arrow)" opacity=".6" stroke="#fbbf24" stroke-width="1.8"></path>
+<path d="M160 116 V92" fill="none" marker-end="url(#d4-1-6-arrow)" opacity=".6" stroke="#fbbf24" stroke-width="1.8"></path>
+<g>
+<rect fill="#111827" filter="url(#d4-1-6-glow)" height="64" rx="10" stroke="#fbbf24" stroke-width="2" width="240" x="40" y="22"></rect>
+<text fill="#e5e7eb" font-size="14" font-weight="600" text-anchor="middle" x="160.0" y="59.0">Resultados</text>
+</g>
+<g>
+<rect fill="#111827" height="64" rx="10" stroke="#38bdf8" stroke-width="2" width="240" x="420" y="22"></rect>
+<text fill="#e5e7eb" font-size="14" font-weight="600" text-anchor="middle" x="540.0" y="59.0">Elección</text>
+</g>
+<g>
+<rect fill="#111827" height="64" rx="10" stroke="#38bdf8" stroke-width="2" width="240" x="420" y="116"></rect>
+<text fill="#e5e7eb" font-size="14" font-weight="600" text-anchor="middle" x="540.0" y="153.0">Limitaciones</text>
+</g>
+<g>
+<rect fill="#111827" height="64" rx="10" stroke="#38bdf8" stroke-width="2" width="240" x="40" y="116"></rect>
+<text fill="#e5e7eb" font-size="14" font-weight="600" text-anchor="middle" x="160.0" y="144.0">Reevaluar cuando</text>
+<text fill="#e5e7eb" font-size="14" font-weight="600" text-anchor="middle" x="160.0" y="163.0">cambiar</text>
+</g>
+</svg>
+</div>
+<figcaption>Una buena decisión sigue siendo comprensible cuando otra persona necesita revisarla.</figcaption>
+</figure>
+<div class="inema-prose">
+<h3>Qué es</h3>
+<p data-inema-block="m4-1-t6-p1" id="m4-1-t6-p1">El resultado del experimento debe decir qué configuración se eligió, por qué, en qué casos y con qué límites. Incluye una fecha de revisión o eventos que justifiquen repetir la comparación: nueva herramienta, modelo, tipo de entrada o cambio de contrato.</p>
+<h3>Por qué aprender</h3>
+<p data-inema-block="m4-1-t6-p2" id="m4-1-t6-p2">La optimización es una decisión situada. Una actualización puede alterar el comportamiento o la disponibilidad. Guardar la evidencia te permite revisar la elección sin empezar de opiniones vagas o del recuerdo del mejor ejemplo.</p>
+<h3>Conceptos clave</h3>
+</div>
+<div class="key-grid">
+<div class="key">
+<strong>Decisión</strong>configuración adoptada.</div>
+<div class="key">
+<strong>Alcance</strong>tareas cubiertas.</div>
+<div class="key">
+<strong>Evidencia</strong>resultados y artefactos.</div>
+<div class="key">
+<strong>Disparador para revisión</strong>cambio relevante.</div>
+</div>
+<div class="code-box">
+<div class="code-head">
+<span>EJEMPLO COMENTADO · 4.1.6</span>
+<button data-copy="code-4-1-6">Copiar ejemplo</button>
+</div>
+<pre id="code-4-1-6">
+<code>Elección: configuración B para resúmenes de texto.
+Base: pasó en 12 casos, 3 rondas por caso.
+Límite: no evaluada para edición de imágenes.
+Reevaluar: cambio de modelo, rúbrica o entrada.</code>
+</pre>
+</div>
+<div class="comparison">
+<div class="compare-good">
+<h3>✓ Haz así</h3>
+<p>Diferencie medición, estimación e información no disponible.</p>
+</div>
+<div class="compare-bad">
+<h3>✗ Evita este error</h3>
+<p>Declarar “el mejor modelo” sin especificar la tarea y las condiciones.</p>
+</div>
+</div>
+<div class="practice">
+<h3>Practica antes de revelar</h3>
+<p>¿Qué conclusión cabe después de un piloto de solo dos casos?</p>
+<details>
+<summary>Ver respuesta comentada</summary>
+<p>“El candidato merece una evaluación mayor”. Dos casos pueden revelar un defecto, pero no respaldan una promesa amplia de confiabilidad.</p>
+</details>
+</div>
+<div class="read-controls">
+<button aria-pressed="false" data-inema-read-toggle="">
+<span aria-hidden="true">✓</span>
+<span data-inema-read-label="">Marcar como leído</span>
+</button>
+<button aria-pressed="false" data-inema-doubt-toggle="">Tengo una duda</button>
+</div>
+</section>
+<section class="quiz" data-inema-check="q-4-1">
+<span class="eyebrow">VERIFICACIÓN SIN BLOQUEO</span>
+<h2>Verifique su comprensión</h2>
+<p>¿Qué número ayuda más a elegir una configuración económica?</p>
+<div class="quiz-options">
+<button data-inema-check-option="0">Precio nominal aislado.</button>
+<button data-inema-check-option="1">Costo total dividido entre las entregas aceptadas, con la calidad mínima cumplida.</button>
+<button data-inema-check-option="2">Tiempo de la única ejecución más rápida.</button>
+</div>
+<div aria-live="polite" data-inema-check-feedback="" role="status">
+</div>
+</section>
+<section class="module-summary">
+<h2>¿Qué te llevas de este módulo?</h2>
+<p>Planifique una comparación justa y calcule el costo por entrega aceptada.</p>
+<ul>
+<li>Establezca una configuración de referencia.</li>
+<li>Compare una variable por vez.</li>
+<li>Elija casos que representen el trabajo real.</li>
+<li>Calcule el costo por entrega aceptada.</li>
+<li>Reduzca el esfuerzo con una puerta de calidad.</li>
+<li>Registre una decisión que puede revisarse.</li>
+</ul>
+<p>Próxima acción: guarde el ejercicio en su laboratorio y registre lo que todavía necesita revisión.</p>
+</section>
+<div class="actions">
+<a class="btn" href="index.html">← Mapa de la ruta</a>
+<a class="btn cta" href="../trilha4/modulo-4-2.html">Próximo: Evoluciona y entrega tu primera skill →</a>
+</div>
+</article>
+</div>
+<p class="muted">Referencia de este módulo: transcripción proporcionada y <a href="../../index.html#fontes">fuentes y notas técnicas del curso</a>.</p>
+</main>
+<footer>
+<div class="wrap">Agent Skills · INEMA.CLUB · v1.1.0 · Curso en portugués<br/>Material educativo original basado en la referencia indicada. Progreso guardado en este navegador; exporte una copia en Mi recorrido.<br/>
+<a href="../../index.html#fontes">Referencias y criterios editoriales</a> · <a download="" href="../../materiais/kit-agent-skills.zip">Descargar kit de práctica</a>
+</div>
+</footer>
+<dialog aria-label="Lectura del módulo" id="module-modal">
+<button data-close-modal="">Cerrar módulo</button>
+<iframe title="Contenido completo del módulo">
+</iframe>
+</dialog>
+<script id="quiz-data" type="application/json">{"id": "q-4-1", "q": "¿Qué número ayuda más a elegir una configuración económica?", "options": ["Precio nominal aislado.", "Costo total dividido entre las entregas aceptadas, con la calidad mínima cumplida.", "Tiempo de la única ejecución más rápida."], "answer": "1", "explain": {"0": "Las repeticiones y las correcciones también cuestan. La configuración solo compite después de cumplir los criterios de calidad.", "1": "Las repeticiones y las correcciones también cuestan. La configuración solo compite después de cumplir los criterios de calidad.", "2": "Las repeticiones y las correcciones también cuestan. La configuración solo compite después de cumplir los criterios de calidad."}}</script>
+<script src="../../assets/learn.js">
+</script>
+<script src="../../assets/course.js">
+</script>
+<nav aria-label="Idioma del curso" data-course-languages=""><a href="../../../curso/trilha4/modulo-4-1.html" hreflang="pt-BR" lang="pt-BR">Português</a><a href="../../../en/curso/trilha4/modulo-4-1.html" hreflang="en" lang="en">English</a><a aria-current="page" href="modulo-4-1.html" hreflang="es" lang="es">Español</a></nav><script data-course-language-hash="">document.querySelectorAll('[data-course-languages] a').forEach(function(a){a.addEventListener('click',function(){a.href=a.getAttribute('href').split('#')[0]+location.hash;});});</script></body>
+</html>

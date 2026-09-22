@@ -1,0 +1,9 @@
+{
+  "signature": "b5d17e97e7cb317e3f7b5d3a2eb4812163c8fc4ce1cb05f7c3640802f2e62d4f",
+  "model": "openai/gpt-5.4-nano",
+  "source_version": "course-i18n-1.0.0",
+  "prompt_sha256": "891f8c2b715056b86559707ed9def326fb2f11b65e2da8c1193f7b1e68c57ea9",
+  "context": "agent-skills",
+  "price_source": "https://openrouter.ai/api/v1/models",
+  "price_checked": "2026-09-22"
+}

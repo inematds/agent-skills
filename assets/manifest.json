@@ -1,0 +1,77 @@
+{
+  "course": "agent-skills-codex",
+  "tracks": [
+    {
+      "n": "1",
+      "title": "Fundamentos",
+      "modules": [
+        {
+          "id": "1-1",
+          "title": "Entenda o que uma skill ensina",
+          "topics": 6,
+          "href": "curso/trilha1/modulo-1-1.html"
+        },
+        {
+          "id": "1-2",
+          "title": "Comece pelo resultado aprovado",
+          "topics": 6,
+          "href": "curso/trilha1/modulo-1-2.html"
+        }
+      ]
+    },
+    {
+      "n": "2",
+      "title": "Construção",
+      "modules": [
+        {
+          "id": "2-1",
+          "title": "Construa uma skill com um trabalho claro",
+          "topics": 6,
+          "href": "curso/trilha2/modulo-2-1.html"
+        },
+        {
+          "id": "2-2",
+          "title": "Calibre a liberdade do agente",
+          "topics": 6,
+          "href": "curso/trilha2/modulo-2-2.html"
+        }
+      ]
+    },
+    {
+      "n": "3",
+      "title": "Verificação",
+      "modules": [
+        {
+          "id": "3-1",
+          "title": "Verifique com evidências",
+          "topics": 6,
+          "href": "curso/trilha3/modulo-3-1.html"
+        },
+        {
+          "id": "3-2",
+          "title": "Faça uma revisão visual de verdade",
+          "topics": 6,
+          "href": "curso/trilha3/modulo-3-2.html"
+        }
+      ]
+    },
+    {
+      "n": "4",
+      "title": "Evolução",
+      "modules": [
+        {
+          "id": "4-1",
+          "title": "Compare qualidade, custo e esforço",
+          "topics": 6,
+          "href": "curso/trilha4/modulo-4-1.html"
+        },
+        {
+          "id": "4-2",
+          "title": "Evolua e entregue sua primeira skill",
+          "topics": 6,
+          "href": "curso/trilha4/modulo-4-2.html"
+        }
+      ]
+    }
+  ]
+}
