@@ -2,15 +2,15 @@
 > portal-inema@0.3.0 test
 > node --test tests/*.mjs
 
-✔ manifest lists the actual declared WebMCP tools without claiming execution (1.39582ms)
-✔ legacy knowledge snapshot is unique and does not collide with local articles (0.843821ms)
-✔ menu e áreas mantêm idioma, inclusive arquivos HTML e subáreas (0.399487ms)
-✔ não perde âncora nem parâmetros e reconhece index.html e caminho sem barra (0.062848ms)
-✔ não inventa tradução para endereço externo ou desconhecido (0.06208ms)
-✔ os três dicionários têm exatamente as mesmas chaves (1.71809ms)
-✔ nenhum valor vazio ou não-string (1.024381ms)
-✔ pt.json tem as chaves usadas pelo Portal (0.177119ms)
-✔ translated-courses.ts: ids únicos por locale e url github.io ou inema (0.300911ms)
+✔ manifest lists the actual declared WebMCP tools without claiming execution (0.714478ms)
+✔ legacy knowledge snapshot is unique and does not collide with local articles (1.002446ms)
+✔ menu e áreas mantêm idioma, inclusive arquivos HTML e subáreas (0.414031ms)
+✔ não perde âncora nem parâmetros e reconhece index.html e caminho sem barra (0.063936ms)
+✔ não inventa tradução para endereço externo ou desconhecido (0.062912ms)
+✔ os três dicionários têm exatamente as mesmas chaves (1.712925ms)
+✔ nenhum valor vazio ou não-string (0.849086ms)
+✔ pt.json tem as chaves usadas pelo Portal (0.177392ms)
+✔ translated-courses.ts: ids únicos por locale e url github.io ou inema (0.316655ms)
 ℹ tests 9
 ℹ suites 0
 ℹ pass 9
@@ -18,4 +18,4 @@
 ℹ cancelled 0
 ℹ skipped 0
 ℹ todo 0
-ℹ duration_ms 251.085477
+ℹ duration_ms 272.591672

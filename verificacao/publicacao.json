@@ -1,0 +1,54 @@
+{
+  "date": "2026-09-22",
+  "course_initial_commit": "caafd20",
+  "portal": "ca8307b",
+  "busca": "1baa4cb",
+  "pro": "33a8cb9",
+  "http": [
+    {
+      "url": "https://inematds.github.io/agent-skills/",
+      "status": 200,
+      "bytes": 21395
+    },
+    {
+      "url": "https://inematds.github.io/agent-skills/en/",
+      "status": 200,
+      "bytes": 21097
+    },
+    {
+      "url": "https://inematds.github.io/agent-skills/es/",
+      "status": 200,
+      "bytes": 21666
+    },
+    {
+      "url": "https://inematds.github.io/agent-skills/curso/trilha1/modulo-1-1.html",
+      "status": 200,
+      "bytes": 46959
+    },
+    {
+      "url": "https://inematds.github.io/agent-skills/en/curso/trilha4/modulo-4-2.html",
+      "status": 200,
+      "bytes": 46770
+    },
+    {
+      "url": "https://inematds.github.io/agent-skills/es/curso/trilha2/modulo-2-2.html",
+      "status": 200,
+      "bytes": 47755
+    },
+    {
+      "url": "https://inematds.github.io/agent-skills/materiais/kit-agent-skills.zip",
+      "status": 200,
+      "bytes": 8066
+    },
+    {
+      "url": "https://inematds.github.io/agent-skills/en/materiais/kit-agent-skills.zip",
+      "status": 200,
+      "bytes": 7873
+    },
+    {
+      "url": "https://inematds.github.io/agent-skills/es/materiais/kit-agent-skills.zip",
+      "status": 200,
+      "bytes": 8118
+    }
+  ]
+}
