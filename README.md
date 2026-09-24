@@ -57,3 +57,11 @@ Metodologia: transcrição enviada pelo usuário; o vídeo não foi baixado ou a
 Versão **1.1.0**. Formato e assets de base: skill `formato-curso-v2`, com correções locais de integração registradas em `FALHAS.md`. Conteúdo, imagens vetoriais e exercícios desenvolvidos para este projeto.
 
 A geração dos idiomas usa BeautifulSoup (`pip install beautifulsoup4`) e dicionários versionados, sem API. `scripts/acquire_locales.py` é uma ferramenta opcional de manutenção com chamadas pagas via OpenRouter e chave carregada em runtime; não é necessário executá-la para estudar ou reconstruir esta versão.
+
+<!-- inema-backlink:v1 -->
+## Mais no INEMA.CLUB
+
+- [Ficha completa deste curso](https://www.inema.club/cursos/281-agent-skills-crie-skills-verificaveis-no-codex/)
+- [Guia: como aprender inteligência artificial](https://www.inema.club/aprender-inteligencia-artificial/)
+- [Todos os cursos](https://www.inema.club/cursos/)
+<!-- /inema-backlink:v1 -->
